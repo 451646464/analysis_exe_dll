@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime, timedelta
 import re
 import requests
-import yara
+
 from flask import current_app
 
 from models import AnalysisSample
@@ -370,42 +370,58 @@ def analyze_network_indicators(strings):
 
 
 
-
-
+try:
+    import yara
+except ImportError:
+    yara = None
+    logger.warning("مكتبة YARA غير موجودة، سيتم تخطي تحليل القواعد.")
 
 def apply_yara_rules(file_path):
+    """
+    فحص الملف باستخدام قواعد YARA.
+    - إذا كانت مكتبة YARA غير موجودة، سيتم إرجاع قائمة فارغة.
+    - يتحقق من وجود مجلد القواعد وملفات القواعد قبل الفحص.
+    """
     matches = []
-    try:
-        # نحصل على مسار المجلد الذي يحتوي هذا السكربت
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        rules_dir = os.path.join(base_dir, 'yara-rules')  # مجلد القواعد داخل مجلد السكربت نفسه
 
-        # نتحقق من وجود المجلد بشكل صحيح
+    if not yara:
+        logger.warning("تخطي فحص YARA بسبب عدم وجود مكتبة yara.")
+        return matches
+
+    try:
+        # الحصول على مسار مجلد القواعد
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        rules_dir = os.path.join(base_dir, 'yara-rules')
+
+        # التأكد من وجود المجلد
         if not os.path.exists(rules_dir):
             logger.warning(f"مجلد القواعد غير موجود: {rules_dir}. سيتم إنشاؤه.")
             os.makedirs(rules_dir)
-            return matches  # لا توجد قواعد للفحص
-
-        # نقرأ ملفات القواعد فقط من المجلد الصحيح
-        yara_files = [f for f in os.listdir(rules_dir) if f.endswith(('.yar', '.yara'))]
-        if not yara_files:
-            logger.warning(f"لا توجد ملفات قواعد في {rules_dir}")
             return matches
 
-        # نُركب قواعد yara من كل ملف ونطبقها على الملف المُدخل
+        # قراءة ملفات القواعد فقط
+        yara_files = [f for f in os.listdir(rules_dir) if f.endswith(('.yar', '.yara'))]
+        if not yara_files:
+            logger.warning(f"لا توجد ملفات قواعد YARA في {rules_dir}")
+            return matches
+
+        # تركيب كل قاعدة وتشغيلها على الملف
         for yara_file in yara_files:
             try:
-                rules = yara.compile(os.path.join(rules_dir, yara_file))
+                rule_path = os.path.join(rules_dir, yara_file)
+                rules = yara.compile(filepath=rule_path)
                 for match in rules.match(file_path):
                     matches.append({
                         'rule': match.rule,
                         'tags': ', '.join(match.tags),
-                        'description': match.meta.get('description', '') if hasattr(match, 'meta') else ''
+                        'description': getattr(match, 'meta', {}).get('description', '')
                     })
             except Exception as e:
                 logger.error(f"خطأ في قاعدة YARA {yara_file}: {str(e)}")
+
     except Exception as e:
         logger.error(f"خطأ أثناء فحص YARA: {str(e)}")
+
     return matches
 
 
