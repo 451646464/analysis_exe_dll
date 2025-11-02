@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>نتيجة فحص الثغرات</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; font-family: Arial, sans-serif; }
+        pre { background: #212529; color: #e9ecef; padding: 15px; border-radius: 6px; overflow: auto; direction: ltr; }
+        .vuln { padding: 10px; border-left: 4px solid #dc3545; background: #f8d7da; margin-bottom: 10px; }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container">
+        <h1 class="mb-4">نتيجة فحص الثغرات</h1>
+
+        <div class="mb-3">
+            <strong>الحالة:</strong>
+            {% if predicted_type != 'Secure' %}
+                <span class="text-danger">🔴 يحتوي على ثغرة</span>
+            {% else %}
+                <span class="text-success">🟢 كود آمن</span>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <strong>نوع الثغرة المتوقَّع:</strong> {{ predicted_type }}
+        </div>
+
+        <div class="mb-3">
+            <strong>درجة الثقة:</strong> {{ (confidence * 100)|round(2) }}%
+        </div>
+
+        <hr>
+
+        <h3>الكود المُفحص</h3>
+        <pre>{{ code }}</pre>
+
+        <hr>
+
+        <h3>تفاصيل الثغرات ({{ vulnerabilities|length }})</h3>
+        {% if vulnerabilities %}
+            {% for v in vulnerabilities %}
+                <div class="vuln">
+                    <strong>السطر {{ v.line }} — {{ v.type }}</strong><br>
+                    <code>{{ v.snippet }}</code>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-success">لم يتم الكشف عن ثغرات محددة، يُنصح بالمراجعة اليدوية.</div>
+        {% endif %}
+
+        <a href="{{ url_for('index') }}" class="btn btn-secondary mt-3">العودة للفحص مجدداً</a>
+    </div>
+</body>
+</html>

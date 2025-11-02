@@ -1,0 +1,582 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Report - {{ sample.filename }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto" id="report-content">
+    <!-- Header -->
+    <div class="gradient-bg rounded-xl p-6 text-white shadow-lg mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold">Malware Analysis Report</h1>
+                <p class="opacity-90 mt-1">Static and dynamic analysis results for PE file</p>
+            </div>
+            <div class="mt-4 md:mt-0 text-center">
+                <div class="text-sm opacity-80">Report Date</div>
+                <div class="text-lg font-semibold">{{ sample.upload_date.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sample Info -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 mb-8 card-hover">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+                <h2 class="text-xl font-bold text-green-600 mb-2">Sample Information</h2>
+                <div class="flex items-center">
+                    <span class="bg-gray-200 rounded-full p-2 mr-3">
+                        <i class="fas fa-file text-gray-700"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-semibold text-lg">{{ sample.filename }}</h3>
+                        <p class="text-gray-600 text-sm">{{ sample.file_size // 1024 }} KB | {{ sample.file_hash[:12] }}...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 md:mt-0">
+                <span class="px-4 py-2 rounded-full text-lg font-bold
+                    {% if sample.is_malicious %} bg-red-100 text-red-800
+                    {% else %} bg-green-100 text-green-800 {% endif %}">
+                    {{ sample.prediction }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 mb-8 card-hover">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-200">Analysis Summary</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Static Analysis -->
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4">
+                <h3 class="font-semibold text-white mb-2">Static Analysis</h3>
+                <p class="text-lg">
+                    {% if sample.is_malicious %}
+                        <span class="text-red-600 font-bold">Malicious indicators detected</span>
+                    {% else %}
+                        <span class="text-green-600 font-bold">No malicious indicators found</span>
+                    {% endif %}
+                </p>
+                {% if sample.probability is not none %}
+                <div class="mt-3">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-gray-800/50 backdrop-blur-sm h-2.5 rounded-full"
+                             style="width: {{ sample.probability * 100 }}%"></div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">Malicious Probability: {{ '%.2f'|format(sample.probability * 100) }}%</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Dynamic Analysis -->
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-red-500 card-hover">
+                <h3 class="font-semibold text-white mb-2">Dynamic Analysis</h3>
+                {% if sandbox_report and sandbox_report.status == "completed" %}
+                    <p class="text-lg font-bold
+                        {% if sandbox_report.verdict == 'malicious' %} text-red-600
+                        {% elif sandbox_report.verdict == 'suspicious' %} text-yellow-600
+                        {% else %} text-green-600 {% endif %}">
+                        {{ sandbox_report.verdict|capitalize }}
+                    </p>
+                    <p class="text-sm text-red-50 mt-1">
+                        Risk Score: {{ sandbox_report.score }}/100
+                    </p>
+                {% else %}
+                    <p class="text-white">Dynamic analysis not available</p>
+                {% endif %}
+            </div>
+
+            <!-- Risk Indicators -->
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-4 border-t-4 border-red-500 card-hover">
+                <h3 class="font-semibold text-white mb-2">Risk Indicators</h3>
+                {% if dynamic_indicators %}
+                    <ul class="list-disc list-inside text-red-600">
+                        {% for indicator in dynamic_indicators[:3] %}
+                            <li class="truncate">{{ indicator }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% if dynamic_indicators|length > 3 %}
+                        <p class="text-sm text-gray-300 mt-1">And {{ dynamic_indicators|length - 3 }} more indicators</p>
+                    {% endif %}
+                {% else %}
+                    <p class="text-white">No risk indicators detected</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Static Analysis Results -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">Static Analysis Results</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Strings -->
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-gray-300 mb-2">Strings</h3>
+                <div class="max-h-40 overflow-y-auto">
+                    <table class="w-full text-sm text-left text-gray-300">
+                        <thead>
+                            <tr>
+                                <th class="px-2 py-1">Offset</th>
+                                <th class="px-2 py-1">String</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in strings[:50] %}
+                            <tr class="border-t border-gray-700">
+                                <td>{{ item.offset }}</td>
+                                <td>{{ item.string }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-sm text-gray-400 mt-2">{{ strings|length }} strings found</p>
+            </div>
+
+            <!-- Binwalk -->
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-gray-300 mb-2">Binwalk Analysis</h3>
+                {% if binwalk_results %}
+                <ul class="list-disc list-inside pl-2">
+                    {% for result in binwalk_results[:3] %}
+                    <li class="text-sm text-gray-300 truncate" title="{{ result.description }}">
+                        {{ result.offset | hex }}: {{ result.description }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% if binwalk_results|length > 3 %}
+                <p class="text-sm text-gray-400 mt-1">
+                    And {{ binwalk_results|length - 3 }} more entries
+                </p>
+                {% endif %}
+                {% else %}
+                <p class="text-gray-400">No embedded files found</p>
+                {% endif %}
+            </div>
+
+            <!-- Entropy & Packing -->
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-gray-300 mb-2">Entropy & Packing</h3>
+                <div class="flex items-center mb-2">
+                    <span class="text-gray-400 mr-2">Entropy:</span>
+                    <span class="font-bold {% if sample.entropy > 7.0 %}text-red-400{% else %}text-green-400{% endif %}">
+                        {{ '%.3f'|format(sample.entropy) }}
+                    </span>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-gray-400 mr-2">Packed:</span>
+                    <span class="font-bold {% if sample.packed %}text-red-400{% else %}text-green-400{% endif %}">
+                        {{ sample.packed | yesno('نعم', 'لا') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Network Indicators -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">Network Indicators</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- IPs -->
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-gray-300 mb-2">IP Addresses</h3>
+                {% if network_indicators.ips %}
+                <ul class="list-disc list-inside pl-2">
+                    {% for ip in network_indicators.ips %}
+                    <li class="text-sm text-red-400 truncate">{{ ip }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-400">No IP addresses found</p>
+                {% endif %}
+            </div>
+
+            <!-- Domains -->
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-gray-300 mb-2">Domains</h3>
+                {% if network_indicators.domains %}
+                <ul class="list-disc list-inside pl-2">
+                    {% for domain in network_indicators.domains %}
+                    <li class="text-sm text-red-400 truncate">{{ domain }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-400">No domains found</p>
+                {% endif %}
+            </div>
+
+            <!-- URLs -->
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-gray-300 mb-2">URLs</h3>
+                {% if network_indicators.urls %}
+                <ul class="list-disc list-inside pl-2">
+                    {% for url in network_indicators.urls %}
+                    <li class="text-sm text-red-400 truncate">{{ url }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-400">No URLs found</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Analysis -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">Security Analysis</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- YARA Matches -->
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-gray-300 mb-2">YARA Matches</h3>
+                {% if yara_matches %}
+                <ul class="list-disc list-inside pl-2">
+                    {% for match in yara_matches %}
+                    <li class="text-sm text-yellow-400 truncate">{{ match }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-400">No YARA matches found</p>
+                {% endif %}
+            </div>
+
+            <!-- Libraries -->
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-gray-300 mb-2">Imported Libraries</h3>
+                {% if libraries %}
+                <ul class="list-disc list-inside pl-2">
+                    {% for lib in libraries %}
+                    <li class="text-sm text-blue-400 truncate">
+                        {{ lib }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-400">No libraries found</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Behavioral Indicators -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">Behavioral Indicators</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- PowerShell Commands -->
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-gray-300 mb-2">PowerShell Commands</h3>
+                {% if powershell_commands %}
+                <ul class="list-disc list-inside pl-2">
+                    {% for cmd in powershell_commands[:5] %}
+                    <li class="text-sm text-purple-400 truncate">
+                        {{ cmd }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% if powershell_commands|length > 5 %}
+                <p class="text-sm text-gray-400 mt-1">And {{ powershell_commands|length - 5 }} more commands</p>
+                {% endif %}
+                {% else %}
+                <p class="text-gray-400">No PowerShell commands found</p>
+                {% endif %}
+            </div>
+
+            <!-- Persistence Mechanisms -->
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-gray-300 mb-2">Persistence Mechanisms</h3>
+                {% if persistence_indicators %}
+                <ul class="list-disc list-inside pl-2">
+                    {% for indicator in persistence_indicators[:5] %}
+                    <li class="text-sm text-orange-400 truncate">
+                        {{ indicator }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% if persistence_indicators|length > 5 %}
+                <p class="text-sm text-gray-400 mt-1">And {{ persistence_indicators|length - 5 }} more indicators</p>
+                {% endif %}
+                {% else %}
+                <p class="text-gray-400">No persistence mechanisms detected</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Threat Intelligence -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">Threat Intelligence</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- C2 Servers -->
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-gray-300 mb-2">Command & Control Servers</h3>
+                {% if c2_indicators %}
+                <ul class="list-disc list-inside pl-2">
+                    {% for c2 in c2_indicators %}
+                    <li class="text-sm text-red-500 font-bold truncate">
+                        {{ c2 }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-400">No C2 servers detected</p>
+                {% endif %}
+            </div>
+
+            <!-- MITRE ATT&CK -->
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-gray-300 mb-2">MITRE ATT&CK Techniques</h3>
+                {% if mitre_techniques %}
+                <ul class="list-disc list-inside pl-2">
+                    {% for tech in mitre_techniques %}
+                    <li class="text-sm text-green-400 truncate">
+                        <span class="font-bold">{{ tech.technique }}:</span>
+                        <span>{{ tech.text | truncate(50) }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-400">No MITRE techniques identified</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- PE Header Info -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-red-500 card-hover">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-200">PE Header Information</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for key, value in header_info.items() %}
+            <div class="bg-gray-800/50 rounded-lg p-3">
+                <div class="text-sm text-gray-600 font-medium">{{ key }}</div>
+                <div class="text-base truncate" title="{{ value }}">{{ value }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Sections Info -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-red-500 card-hover">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-800/40">File Sections</h2>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-800/50">
+                <thead class="bg-gray-800/50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Virtual Address</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Virtual Size</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Raw Size</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Entropy</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-gray-800/50 backdrop-blur-sm rounded-2xl divide-y divide-gray-200">
+                    {% for section in sections_info %}
+                    <tr>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-white">{{ section.Name }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ section.VirtualAddress }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ section.VirtualSize }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ section.RawSize }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {{ 'bg-green-100 text-green-800' if section.Entropy < 6 else 'bg-red-100 text-red-800' }}">
+                                {{ section.Entropy }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Imports -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 mb-8 card-hover">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-200">Imported Functions</h2>
+
+        <div class="space-y-4">
+            {% for dll, functions in imports_info.items() %}
+            <div class="bg-gray-800/30 rounded-lg p-4 border border-gray-200">
+                <h3 class="font-semibold text-lg text-blue-600 mb-2">
+                    {{ dll }}
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for func in functions %}
+                    <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                        {{ func }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Sandbox Results (Dynamic Analysis) -->
+    {% if sandbox_report and sandbox_report.status == "completed" %}
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 mb-8 card-hover">
+        <h2 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200">Dynamic Analysis Results</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Behavior Indicators -->
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="font-semibold text-gray-700 mb-3">Behavior Indicators</h3>
+                {% if sandbox_report.behavior_indicators %}
+                <ul class="list-disc list-inside pl-4">
+                    {% for behavior in sandbox_report.behavior_indicators %}
+                    <li class="mb-2 text-gray-700">{{ behavior }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-600">No suspicious behaviors observed</p>
+                {% endif %}
+            </div>
+
+            <!-- Network Activity -->
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-red-500 card-hover">
+                <h3 class="font-semibold text-gray-700 mb-3">Network Activity</h3>
+                {% if sandbox_report.network_activity %}
+                <div class="space-y-3">
+                    {% for activity in sandbox_report.network_activity %}
+                    <div class="border-l-4 border-blue-500 pl-3 py-1">
+                        <div class="font-medium">{{ activity.type }}</div>
+                        <div class="text-sm text-gray-600">{{ activity.target }}:{{ activity.port }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-green">No network activity observed</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Report Options -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-red-500 card-hover">
+        <h2 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200">Report Options</h2>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{{ url_for('generate_pdf', sample_id=sample.id) }}"
+               class="px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white font-medium rounded-lg hover:from-green-700 hover:to-teal-700 transition-all flex items-center justify-center">
+                <i class="fas fa-file-pdf mr-2"></i> Save as PDF
+            </a>
+
+            <button id="share-report-btn"
+                    class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-700 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-800 transition-all flex items-center justify-center">
+                <i class="fas fa-share-alt mr-2"></i> Share Report
+            </button>
+
+            <a href="{{ url_for('index') }}"
+               class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-all flex items-center justify-center">
+                <i class="fas fa-redo mr-2"></i> Analyze Another File
+            </a>
+            <!-- زر حذف التقرير -->
+          <button onclick="confirmDelete('sample', {{ sample.id }})"
+              class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-800 text-white font-medium rounded-lg hover:from-red-700 hover:to-red-900 transition-all flex items-center justify-center">
+              <i class="fas fa-trash-alt mr-2"></i> حذف التقرير
+              </button>
+                        <!-- زر العودة للوحة التحكم -->
+            <a href="{{ url_for('dashboard') }}"
+               class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white font-medium rounded-lg hover:from-indigo-700 hover:to-indigo-900 transition-all flex items-center justify-center">
+                <i class="fas fa-tachometer-alt mr-2"></i> لوحة التحكم
+            </a>
+
+        </div>
+    </div>
+</div>
+<script>
+// نافذة تأكيد الحذف
+function confirmDelete(reportType, reportId) {
+    if (confirm('هل أنت متأكد من أنك تريد حذف هذا التقرير؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        deleteReport(reportType, reportId);
+    }
+}
+
+function deleteReport(reportType, reportId) {
+    let endpoint = '';
+    switch(reportType) {
+        case 'sample':
+            endpoint = `/delete_sample_report/${reportId}`;
+            break;
+        case 'web':
+            endpoint = `/delete_web_report/${reportId}`;
+            break;
+        case 'url':
+            endpoint = `/delete_url_report/${reportId}`;
+            break;
+        case 'code':
+            endpoint = `/delete_code_report/${reportId}`;
+            break;
+        case 'pdf':
+            endpoint = `/delete_pdf_report/${reportId}`;
+            break;
+        default:
+            alert('نوع التقرير غير معروف');
+            return;
+    }
+
+    fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم حذف التقرير بنجاح');
+            window.location.href = "{{ url_for('dashboard') }}";
+        } else {
+            alert('فشل في حذف التقرير: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء محاولة الحذف');
+    });
+}
+</script>
+<script>
+    // Open sharing modal
+    document.getElementById('share-report-btn').addEventListener('click', function() {
+        const expiryDays = 7;
+        const sampleId = {{ sample.id }};
+
+        fetch(`/share_sample/${sampleId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `expiry_days=${expiryDays}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Create hidden text element to copy link
+                const tempInput = document.createElement('input');
+                tempInput.value = data.share_url;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
+                alert('Share link copied: ' + data.share_url);
+            } else {
+                alert('Error generating link: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error generating link');
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}PDF Analysis - Security Analysis System{% endblock %}
+
+{% block content %}
+<center>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20">
+    <!-- Hero Section -->
+    <div class="text-center py-16">
+        <h1 class="text-2xl font-extrabold text-white sm:text-3xl md:text-4xl">
+            <span class="block">Malware PDF File Scanning</span>
+            <span class="block bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary mt-3">
+                Multi-Source Analysis System
+            </span>
+        </h1>
+        <p class="mt-5 max-w-2xl mx-auto text-xl text-gray-300">
+            Scan PDF files using multiple analysis engines to identify potential threats
+        </p>
+    </div>
+
+    <!-- Analysis Card -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-gray-700 card-hover">
+        <div class="gradient-bg p-8">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-file-pdf text-3xl text-white"></i>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-2xl font-bold text-white">Scan New PDF File</h2>
+                    <p class="mt-1 text-blue-100">Upload a PDF file to scan with multiple engines</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-8">
+            <form method="post" enctype="multipart/form-data" class="space-y-8">
+                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div>
+                    <label class="block text-lg font-medium text-gray-300 mb-4">Select PDF File to Scan:</label>
+                    <div class="flex items-center justify-center w-full">
+                        <label for="file-upload" class="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-600 rounded-2xl cursor-pointer bg-gray-900/50 hover:bg-gray-800/50 transition-colors">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg class="w-16 h-16 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                <p class="mb-2 text-lg text-gray-400">
+                                    <span class="font-semibold">Click to upload</span> or drag and drop
+                                </p>
+                                <p class="text-md text-gray-500">PDF only (Max: {{ config.MAX_FILE_SIZE//1024//1024 }}MB)</p>
+                            </div>
+                            <input id="file-upload" name="pdf_file" type="file" class="hidden" accept=".pdf" required onchange="displayFileName(this)" />
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Scan Engines -->
+                <div class="bg-gray-900/50 rounded-2xl p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">Select Scan Engines:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center">
+                            <input id="virustotal" name="engines" type="checkbox" value="virustotal" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded" checked>
+                            <label for="virustotal" class="ml-3 block text-sm font-medium text-gray-300">
+                                <span class="flex items-center">
+                                    <i class="fas fa-shield-alt text-blue-400 mr-2"></i> VirusTotal
+                                </span>
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="metadefender" name="engines" type="checkbox" value="metadefender" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded" checked>
+                            <label for="metadefender" class="ml-3 block text-sm font-medium text-gray-300">
+                                <span class="flex items-center">
+                                    <i class="fas fa-cloud text-green-400 mr-2"></i> MetaDefender
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center pt-4">
+                    <button type="submit" class="px-10 py-4 gradient-bg text-white font-bold rounded-xl hover:opacity-90 transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/50">
+                        <i class="fas fa-search mr-3"></i> Start Scan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent PDF Scans Section -->
+    {% if latest_pdf_analyses %}
+    <div class="mt-16">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold text-white">Recent Scans</h2>
+            <a href="{{ url_for('pdf_analysis') }}" class="text-primary hover:text-blue-400 flex items-center">
+                New Scan
+                <i class="fas fa-plus ml-2"></i>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for analysis in latest_pdf_analyses %}
+            <a href="{{ url_for('pdf_report', analysis_id=analysis.id) }}" class="bg-gray-800/50 backdrop-blur-sm rounded-xl shadow-lg p-6 hover:bg-gray-700/50 transition-all duration-300 card-hover">
+                <div class="flex items-start mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 rounded-lg flex items-center justify-center
+                            {% if analysis.is_malicious %} bg-red-500/20 text-red-400
+                            {% else %} bg-green-500/20 text-green-400 {% endif %}">
+                            <i class="fas {% if analysis.is_malicious %}fa-skull-crossbones{% else %}fa-shield-alt{% endif %}"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 min-w-0">
+                        <h3 class="font-bold text-white truncate">{{ analysis.filename }}</h3>
+                        <p class="text-sm text-gray-400 mt-1">
+                            {{ analysis.upload_date.strftime('%Y-%m-%d %H:%M') }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-gray-400">Scan Engines:</span>
+                        <span class="text-sm font-medium text-white">{{ analysis.engines_used|length }}/{{ analysis.engines_total }}</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div class="h-2 rounded-full bg-blue-500" style="width: {{ (analysis.engines_used|length / analysis.engines_total * 100) }}%"></div>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex justify-between items-center">
+                    <span class="px-3 py-1 rounded-full text-sm font-bold
+                        {% if analysis.is_malicious %} bg-red-500/30 text-red-300
+                        {% else %} bg-green-500/30 text-green-300 {% endif %}">
+                        {% if analysis.is_malicious %}Malicious{% else %}Safe{% endif %}
+                    </span>
+
+                    <div class="flex items-center">
+                        <div class="text-sm font-semibold mr-2
+                            {% if analysis.is_malicious %} text-red-400
+                            {% else %} text-green-400 {% endif %}">
+                            {{ analysis.threat_score }}%
+                        </div>
+                        <div class="w-16 bg-gray-700 rounded-full h-2">
+                            <div class="h-2 rounded-full
+                                {% if analysis.is_malicious %} bg-red-500
+                                {% else %} bg-green-500 {% endif %}"
+                                style="width: {{ analysis.threat_score }}%">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+</center>
+<script>
+    function displayFileName(input) {
+        const fileName = input.files[0]?.name || 'No file chosen';
+        const label = input.parentElement.querySelector('p');
+        if (label) {
+            label.innerHTML = `<span class="font-semibold text-blue-300">${fileName}</span>`;
+        }
+    }
+</script>
+{% endblock %}

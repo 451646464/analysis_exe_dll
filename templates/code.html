@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>ماسح الثغرات الأمنية</title>
+    <style>
+      body { font-family: Arial, sans-serif; direction: rtl; margin: 20px; }
+      textarea { width: 100%; height: 300px; }
+      .flash { padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+      .warning { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>نظام اكتشاف الثغرات الأمنية في أكواد PHP/HTML</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="flash {{ category }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="post" enctype="multipart/form-data">
+      <label>لصق الكود مباشرة:</label><br/>
+      <textarea name="code"></textarea><br/><br/>
+
+      <label>أو رفع ملف:</label><br/>
+      <input type="file" name="file" accept=".php,.html"/><br/><br/>
+
+      <button type="submit">فحص الكود</button>
+    </form>
+</body>
+</html>

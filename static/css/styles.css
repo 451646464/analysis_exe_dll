@@ -1,0 +1,72 @@
+body {
+    font-family: 'Tajawal', sans-serif;
+    direction: rtl;
+}
+
+/* تحسينات للواجهة العربية */
+
+
+/* تخصيص شريط التمرير */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c5c5c5;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* تحسينات للجداول */
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    padding: 0.75rem 1rem;
+    text-align: right;
+}
+
+th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+/* تحسينات للأزرار */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* تحسينات للأشكال */
+input, select, textarea {
+    border: 1px solid #d2d6dc;
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    width: 100%;
+    transition: border-color 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}

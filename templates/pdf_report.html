@@ -1,0 +1,540 @@
+{% extends "base.html" %}
+
+{% block title %}تقرير فحص PDF - {{ analysis.filename }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto" id="report-content">
+    <!-- شريط العنوان -->
+    <div class="gradient-bg rounded-xl p-6 text-white shadow-lg mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold">تقرير فحص ملف PDF</h1>
+                <p class="opacity-90 mt-1">نتيجة التحليل الأمني للملف باستخدام محركات متعددة</p>
+            </div>
+            <div class="mt-4 md:mt-0 text-center">
+                <div class="text-sm opacity-80">تاريخ الفحص</div>
+                <div class="text-lg font-semibold">{{ analysis.scan_date.strftime('%Y-%m-%d %H:%M') }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- معلومات الفحص -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 mb-8 card-hover">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+                <h2 class="text-xl font-bold text-green-600 mb-2">معلومات الملف</h2>
+                <div class="flex items-center">
+                    <span class="bg-gray-200 rounded-full p-2 mr-3">
+                        <i class="fas fa-file-pdf text-gray-700"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-semibold text-lg">{{ analysis.filename }}</h3>
+                        <p class="text-gray-600 text-sm">الحجم: {{ analysis.file_size // 1024 }} ك.ب | الهاش: {{ analysis.file_hash[:8] }}...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 md:mt-0">
+                <span class="px-4 py-2 rounded-full text-lg font-bold
+                    {% if analysis.is_malicious %} bg-red-100 text-red-800
+                    {% else %} bg-green-100 text-green-800 {% endif %}">
+                    {% if analysis.is_malicious %}ملف ضار{% else %}ملف آمن{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ملخص النتائج -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 mb-8 card-hover">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-200">ملخص النتائج</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border-t-4 border-blue-500">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-check-circle text-blue-400 text-xl mr-2"></i>
+                    <h3 class="font-semibold text-white">المحركات النظيفة</h3>
+                </div>
+                <p class="text-3xl font-bold text-blue-400">{{ analysis.engines_total - analysis.engines_detected }}</p>
+                <div class="mt-3">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-blue-500 h-2.5 rounded-full"
+                             style="width: {{ ((analysis.engines_total - analysis.engines_detected) / analysis.engines_total * 100) if analysis.engines_total > 0 else 0 }}%">
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-300 mt-1">
+                        نسبة الأمان: {{ '%.1f'|format(((analysis.engines_total - analysis.engines_detected) / analysis.engines_total * 100) if analysis.engines_total > 0 else 0) }}%
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border-t-4 border-red-500">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-exclamation-triangle text-red-400 text-xl mr-2"></i>
+                    <h3 class="font-semibold text-white">المحرك الضارة</h3>
+                </div>
+                <p class="text-3xl font-bold text-red-400">{{ analysis.engines_detected }}</p>
+                <div class="mt-3">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-red-500 h-2.5 rounded-full"
+                             style="width: {{ (analysis.engines_detected / analysis.engines_total * 100) if analysis.engines_total > 0 else 0 }}%">
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-300 mt-1">
+                        نسبة الخطورة: {{ '%.1f'|format((analysis.engines_detected / analysis.engines_total * 100) if analysis.engines_total > 0 else 0) }}%
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border-t-4 border-yellow-500">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-shield-alt text-yellow-400 text-xl mr-2"></i>
+                    <h3 class="font-semibold text-white">نتيجة الثقة</h3>
+                </div>
+                <p class="text-3xl font-bold text-yellow-400">{{ analysis.threat_score }}%</p>
+                <div class="mt-3">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-yellow-500 h-2.5 rounded-full"
+                             style="width: {{ analysis.threat_score }}%">
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-300 mt-1">
+                        مستوى الثقة في النتيجة
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نتائج المحركات -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
+            <i class="fas fa-cogs mr-2"></i> نتائج محركات الفحص
+        </h2>
+
+        {% if results %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-700">
+                <thead class="bg-gray-900">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">محرك الفحص</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">الحالة</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">النتيجة</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">التفاصيل</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-gray-800/50 backdrop-blur-sm rounded-2xl divide-y divide-gray-700">
+                    {% for engine_name, engine_result in results.items() %}
+                    <tr class="hover:bg-gray-700/50">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-300">
+                            <div class="flex items-center">
+                                {% if engine_name == 'virustotal' %}
+                                <i class="fas fa-shield-alt text-blue-400 mr-2"></i>
+                                {% elif engine_name == 'metadefender' %}
+                                <i class="fas fa-cloud text-green-400 mr-2"></i>
+                                {% else %}
+                                <i class="fas fa-search text-yellow-400 mr-2"></i>
+                                {% endif %}
+                                {{ engine_name | title }}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-bold rounded-full
+                                {% if engine_result.status == 'completed' %} bg-green-900 text-green-100
+                                {% elif engine_result.status == 'processing' %} bg-yellow-900 text-yellow-100
+                                {% else %} bg-red-900 text-red-100 {% endif %}">
+                                {% if engine_result.status == 'completed' %}مكتمل
+                                {% elif engine_result.status == 'processing' %}قيد المعالجة
+                                {% else %}فاشل{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm
+                            {% if engine_result.result == 'malicious' %} text-red-400
+                            {% elif engine_result.result == 'suspicious' %} text-yellow-400
+                            {% else %} text-green-400 {% endif %}">
+                            {% if engine_result.result == 'malicious' %}ضار
+                            {% elif engine_result.result == 'suspicious' %}مشبوه
+                            {% else %}نظيف{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-300">
+                            {% if engine_result.details %}
+                                {{ engine_result.details }}
+                            {% else %}
+                                لا توجد تفاصيل إضافية
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-8">
+            <div class="inline-block p-4 bg-gray-700 rounded-full mb-4">
+                <i class="fas fa-exclamation-circle text-gray-400 text-4xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-400 mb-2">لا توجد نتائج متاحة</h3>
+            <p class="text-gray-500">لم يتم العثور على نتائج تحليل من المحركات.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- التهديدات المكتشفة -->
+    {% if vulnerabilities %}
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
+            <i class="fas fa-bug mr-2"></i> التهديدات المكتشفة
+        </h2>
+
+        <div class="space-y-4">
+            {% for threat in vulnerabilities %}
+            <div class="bg-gray-900/50 rounded-lg p-4 border-l-4
+                {% if threat.severity == 'high' %} border-red-500
+                {% elif threat.severity == 'medium' %} border-yellow-500
+                {% else %} border-orange-500 {% endif %}">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-bold text-white flex items-center">
+                            {% if threat.severity == 'high' %}
+                            <i class="fas fa-exclamation-circle text-red-400 mr-2"></i>
+                            {% elif threat.severity == 'medium' %}
+                            <i class="fas fa-exclamation-triangle text-yellow-400 mr-2"></i>
+                            {% else %}
+                            <i class="fas fa-info-circle text-orange-400 mr-2"></i>
+                            {% endif %}
+                            {{ threat.type }}
+                        </h3>
+                        <p class="text-gray-300 mt-1">{{ threat.description }}</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-sm font-bold
+                        {% if threat.severity == 'high' %} bg-red-500/30 text-red-300
+                        {% elif threat.severity == 'medium' %} bg-yellow-500/30 text-yellow-300
+                        {% else %} bg-orange-500/30 text-orange-300 {% endif %}">
+                        {% if threat.severity == 'high' %}عالية
+                        {% elif threat.severity == 'medium' %}متوسطة
+                        {% else %}منخفضة{% endif %}
+                    </span>
+                </div>
+                <div class="mt-3 text-sm text-gray-400">
+                    {% if threat.engine %}
+                    <span class="font-medium">المحرك المكتشف:</span> {{ threat.engine }}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
+            <i class="fas fa-bug mr-2"></i> التهديدات المكتشفة
+        </h2>
+        <div class="text-center py-8">
+            <div class="inline-block p-4 bg-green-900/30 rounded-full mb-4">
+                <i class="fas fa-check-circle text-green-400 text-4xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-green-400 mb-2">لم يتم اكتشاف أي تهديدات!</h3>
+            <p class="text-gray-300">الملف يبدو آمناً بناءً على الفحوصات التي تم إجراؤها.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- تحليل الملف -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
+            <i class="fas fa-chart-bar mr-2"></i> تحليل الملف
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-white mb-3">معلومات الملف</h3>
+                <ul class="space-y-2">
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">اسم الملف:</span>
+                        <span class="font-medium text-white">{{ analysis.filename }}</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">الحجم:</span>
+                        <span class="font-medium text-white">{{ analysis.file_size // 1024 }} ك.ب</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">نوع الملف:</span>
+                        <span class="font-medium text-white">PDF</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">عدد الصفحات:</span>
+                        <span class="font-medium text-white">
+                            {% if file_metadata and file_metadata.structure and file_metadata.structure.pages %}
+                                {{ file_metadata.structure.pages }}
+                            {% else %}
+                                غير معروف
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">تاريخ الإنشاء:</span>
+                        <span class="font-medium text-white">
+                            {% if file_metadata and file_metadata.metadata and file_metadata.metadata.get('CreationDate') %}
+                                {{ file_metadata.metadata.CreationDate }}
+                            {% else %}
+                                غير معروف
+                            {% endif %}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-white mb-3">إحصائيات الفحص</h3>
+                <ul class="space-y-2">
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">محركات الفحص:</span>
+                        <span class="font-medium text-white">{{ analysis.engines_total }}</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">المحرك النظيفة:</span>
+                        <span class="font-medium text-green-400">{{ analysis.engines_total - analysis.engines_detected }}</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">المحرك الضارة:</span>
+                        <span class="font-medium text-red-400">{{ analysis.engines_detected }}</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">مستوى الخطورة:</span>
+                        <span class="font-medium
+                            {% if analysis.threat_score > 70 %} text-red-400
+                            {% elif analysis.threat_score > 30 %} text-yellow-400
+                            {% else %} text-green-400 {% endif %}">
+                            {{ analysis.threat_score }}%
+                        </span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">مدة الفحص:</span>
+                        <span class="font-medium text-white">
+                            {% if file_metadata and file_metadata.scan_duration %}
+                                {{ file_metadata.scan_duration }}
+                            {% else %}
+                                غير معروف
+                            {% endif %}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- معلومات إضافية عن بنية الملف -->
+        {% if file_metadata and file_metadata.structure %}
+        <div class="mt-6 bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+            <h3 class="font-semibold text-white mb-3">معلومات بنية الملف</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <span class="text-gray-400">JavaScript:</span>
+                    <span class="font-medium {% if file_metadata.structure.javascript %}text-red-400{% else %}text-green-400{% endif %}">
+                        {{ 'موجود' if file_metadata.structure.javascript else 'غير موجود' }}
+                    </span>
+                </div>
+                <div>
+                    <span class="text-gray-400">النماذج:</span>
+                    <span class="font-medium {% if file_metadata.structure.forms %}text-yellow-400{% else %}text-green-400{% endif %}">
+                        {{ 'موجودة' if file_metadata.structure.forms else 'غير موجودة' }}
+                    </span>
+                </div>
+                <div>
+                    <span class="text-gray-400">ملفات مدمجة:</span>
+                    <span class="font-medium {% if file_metadata.structure.embedded_files %}text-red-400{% else %}text-green-400{% endif %}">
+                        {{ 'موجودة' if file_metadata.structure.embedded_files else 'غير موجودة' }}
+                    </span>
+                </div>
+                <div>
+                    <span class="text-gray-400">طول النص:</span>
+                    <span class="font-medium text-white">
+                        {% if file_metadata.text_length %}
+                            {{ file_metadata.text_length }} حرف
+                        {% else %}
+                            غير معروف
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- التوصيات الأمنية -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
+            <i class="fas fa-lightbulb mr-2"></i> التوصيات الأمنية
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-blue-500">
+                <h3 class="font-semibold text-blue-400 mb-3">
+                    <i class="fas fa-shield-alt mr-2"></i> إجراءات الوقاية
+                </h3>
+                <ul class="list-disc list-inside pl-2 space-y-2">
+                    <li class="text-gray-300">تجنب فتح ملفات PDF من مصادر غير موثوقة</li>
+                    <li class="text-gray-300">تحديث برنامج قارئ PDF إلى آخر إصدار</li>
+                    <li class="text-gray-300">تعطيل JavaScript في قارئ PDF إذا لم يكن ضرورياً</li>
+                    <li class="text-gray-300">استخدام برامج مكافحة الفيروسات المحدثة</li>
+                    <li class="text-gray-300">فحص الملفات المشبوهة قبل فتحها</li>
+                </ul>
+            </div>
+
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-red-500">
+                <h3 class="font-semibold text-red-400 mb-3">
+                    <i class="fas fa-exclamation-triangle mr-2"></i> إجراءات العلاج
+                </h3>
+                <ul class="list-disc list-inside pl-2 space-y-2">
+                    <li class="text-gray-300">حذف الملف فوراً إذا كان ضاراً</li>
+                    <li class="text-gray-300">فحص النظام باستخدام برامج مكافحة الفيروسات</li>
+                    <li class="text-gray-300">مراجعة سجلات النظام لاكتشاف أي نشاط مشبوه</li>
+                    <li class="text-gray-300">تغيير كلمات المرور إذا كان الملف قد تم فتحه</li>
+                    <li class="text-gray-300">الاحتفاظ بنسخ احتياطية من البيانات المهمة</li>
+                </ul>
+            </div>
+        </div>
+
+        {% if analysis.is_malicious %}
+        <div class="mt-6 bg-red-900/30 rounded-lg p-4 border border-red-500">
+            <h3 class="font-semibold text-red-400 mb-3">
+                <i class="fas fa-exclamation-circle mr-2"></i> تنبيه أمني
+            </h3>
+            <p class="text-gray-300">
+                تم تصنيف هذا الملف كملف ضار. يوصى بعدم فتحه وحذفه فوراً من النظام.
+                إذا كان الملف قد تم فتحه مسبقاً، قم بفحص النظام باستخدام برنامج مكافحة فيروسات محدث.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- خيارات التقرير -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-red-500 card-hover">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
+            <i class="fas fa-cog mr-2"></i> خيارات التقرير
+        </h2>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <!-- زر معاينة التقرير -->
+            <a href="{{ url_for('pdf_report', analysis_id=analysis.id) }}"
+               class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-all flex items-center justify-center">
+                <i class="fas fa-eye mr-2"></i> معاينة التقرير
+            </a>
+
+            <!-- زر إنشاء PDF -->
+            <a href="{{ url_for('generate_pdf', sample_id=analysis.id) }}"
+               class="px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white font-medium rounded-lg hover:from-green-700 hover:to-teal-700 transition-all flex items-center justify-center">
+                <i class="fas fa-file-pdf mr-2"></i> تحميل PDF
+            </a>
+
+            <!-- زر مشاركة التقرير -->
+            <button onclick="shareReport()"
+                    class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-700 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-800 transition-all flex items-center justify-center">
+                <i class="fas fa-share-alt mr-2"></i> مشاركة
+            </button>
+
+            <!-- زر حذف التقرير -->
+            <button onclick="confirmDelete({{ analysis.id }})"
+                    class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-800 text-white font-medium rounded-lg hover:from-red-700 hover:to-red-900 transition-all flex items-center justify-center">
+                <i class="fas fa-trash-alt mr-2"></i> حذف التقرير
+            </button>
+
+            <!-- زر فحص ملف آخر -->
+            <a href="{{ url_for('pdf_analysis') }}"
+               class="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-medium rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all flex items-center justify-center">
+                <i class="fas fa-redo mr-2"></i> فحص جديد
+            </a>
+
+            <!-- زر العودة للوحة التحكم -->
+            <a href="{{ url_for('dashboard') }}"
+               class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white font-medium rounded-lg hover:from-indigo-700 hover:to-indigo-900 transition-all flex items-center justify-center">
+                <i class="fas fa-tachometer-alt mr-2"></i> لوحة التحكم
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة تأكيد الحذف -->
+<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-gray-800 rounded-2xl p-6 w-96">
+        <h3 class="text-xl font-bold text-white mb-4">تأكيد الحذف</h3>
+        <p class="text-gray-300 mb-6">هل أنت متأكد من أنك تريد حذف هذا التقرير؟ هذا الإجراء لا يمكن التراجع عنه.</p>
+        <div class="flex justify-end space-x-3">
+            <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                إلغاء
+            </button>
+            <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                تأكيد الحذف
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// نافذة تأكيد الحذف
+let currentAnalysisId = null;
+
+function confirmDelete(analysisId) {
+    currentAnalysisId = analysisId;
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+    currentAnalysisId = null;
+}
+
+// تأكيد الحذف
+document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (currentAnalysisId) {
+        fetch(`/delete_pdf_report/${currentAnalysisId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'  // إذا كنت تستخدم حماية CSRF
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم حذف التقرير بنجاح');
+                window.location.href = "{{ url_for('dashboard') }}";
+            } else {
+                alert('فشل في حذف التقرير: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء محاولة الحذف');
+        })
+        .finally(() => {
+            closeDeleteModal();
+        });
+    }
+});
+
+// إغلاق النافذة عند النقر خارجها
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target.id === 'deleteModal') {
+        closeDeleteModal();
+    }
+});
+
+// مشاركة التقرير
+function shareReport() {
+    const reportUrl = window.location.href;
+
+    navigator.clipboard.writeText(reportUrl).then(() => {
+        alert('تم نسخ رابط التقرير إلى الحافظة: ' + reportUrl);
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+        alert('تعذر نسخ الرابط. يرجى المحاولة مرة أخرى.');
+    });
+}
+
+// إغلاق النافذة بالزر Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+    }
+});
+</script>
+{% endblock %}

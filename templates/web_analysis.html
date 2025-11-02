@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}تحليل أمان تطبيقات الويب{% endblock %}
+
+{% block content %}
+<center>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20 py-8">
+    <!-- Hero Section -->
+    <div class="text-center py-10">
+        <h1 class="text-2xl font-extrabold text-white sm:text-3xl md:text-4xl">
+            <span class="block">تحليل أمان تطبيقات الويب</span>
+            <span class="block bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary mt-3">
+                نظام متكامل لاكتشاف الثغرات الأمنية
+            </span>
+        </h1>
+        <p class="mt-5 max-w-2xl mx-auto text-xl text-gray-300">
+            حل متقدم لفحص المواقع الإلكترونية وتطبيقات الويب للكشف عن الثغرات الأمنية وحماية أنظمتك من الهجمات الإلكترونية
+        </p>
+    </div>
+
+    <!-- Analysis Card -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-gray-700 card-hover">
+        <div class="gradient-bg p-8">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-globe text-3xl text-white"></i>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-2xl font-bold text-white">بدء فحص أمان جديد</h2>
+                    <p class="mt-1 text-blue-100">أدخل رابط الموقع الإلكتروني لبدء عملية التحليل</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-8">
+            <form method="post" action="{{ url_for('web_analysis') }}" class="space-y-8">
+                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div>
+                    <label class="block text-lg font-medium text-gray-300 mb-4">الرابط المستهدف:</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i class="fas fa-link text-blue-300"></i>
+                        </div>
+                        <input type="url" name="target" class="w-full bg-gray-900/70 border border-gray-700 rounded-xl py-4 px-4 text-xl text-blue-200 placeholder:text-blue-300/70 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all pr-12"
+                               placeholder="https://example.com" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-lg font-medium text-gray-300 mb-4">نوع الفحص:</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center p-4 bg-gray-900/50 rounded-xl border border-gray-700">
+                            <div class="flex items-center h-5">
+                                <input class="form-check-input h-5 w-5" type="radio"
+                                       name="scan_type" id="scan_single" value="single" checked>
+                            </div>
+                            <div class="mr-3">
+                                <label for="scan_single" class="font-medium text-white">فحص رابط واحد</label>
+                                <p class="mt-1 text-sm text-gray-400">فحص صفحة ويب واحدة لاكتشاف الثغرات الأمنية</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center p-4 bg-gray-900/50 rounded-xl border border-gray-700">
+                            <div class="flex items-center h-5">
+                                <input class="form-check-input h-5 w-5" type="radio"
+                                       name="scan_type" id="scan_full" value="full">
+                            </div>
+                            <div class="mr-3">
+                                <label for="scan_full" class="font-medium text-white">فحص كامل النطاق (الزحف)</label>
+                                <p class="mt-1 text-sm text-gray-400">فحص كامل الموقع واكتشاف جميع الصفحات</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="maxPagesGroup" style="display:none;">
+                    <label class="block text-lg font-medium text-gray-300 mb-4">الحد الأقصى للصفحات:</label>
+                    <div class="relative max-w-xs">
+                        <input type="number" name="max_pages" class="w-full bg-gray-900/70 border border-gray-700 rounded-xl py-3 px-4 text-lg text-blue-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all" value="20" min="1" max="100">
+                    </div>
+                </div>
+
+                <div class="flex justify-center pt-4">
+                    <button type="submit" class="px-10 py-4 gradient-bg text-white font-bold rounded-xl hover:opacity-90 transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/50">
+                        <i class="fas fa-search mr-3"></i> بدء الفحص
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg card-hover">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                    <i class="fas fa-search text-blue-400 text-xl"></i>
+                </div>
+                <h3 class="ml-4 text-xl font-bold text-white">فحص الثغرات</h3>
+            </div>
+            <p class="text-gray-400">
+                اكتشاف الثغرات الأمنية الشائعة مثل حقن SQL، البرمجة النصية عبر المواقع (XSS)، وتنفيذ الأوامر.
+            </p>
+        </div>
+
+        <div class="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg card-hover">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                    <i class="fas fa-spider text-purple-400 text-xl"></i>
+                </div>
+                <h3 class="ml-4 text-xl font-bold text-white">الزحف الذكي</h3>
+            </div>
+            <p class="text-gray-400">
+                زحف تلقائي لجميع صفحات الموقع لاكتشاف الثغرات المخفية والروابط المعطوبة.
+            </p>
+        </div>
+
+        <div class="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg card-hover">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
+                    <i class="fas fa-file-alt text-green-400 text-xl"></i>
+                </div>
+                <h3 class="ml-4 text-xl font-bold text-white">تقارير تفصيلية</h3>
+            </div>
+            <p class="text-gray-400">
+                تقارير شاملة مع حلول مقترحة لكل ثغرة تم اكتشافها، مع تصنيف حسب مستوى الخطورة.
+            </p>
+        </div>
+    </div>
+
+    <!-- Workflow Section -->
+    <div class="mt-16">
+        <div class="text-center mb-12">
+            <h2 class="text-2xl font-bold text-white">كيف يعمل النظام؟</h2>
+            <p class="mt-3 max-w-2xl mx-auto text-gray-400">
+                عملية الفحص الأمني بسيطة وفعالة في ثلاث خطوات
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="text-center">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-r from-primary to-secondary mx-auto flex items-center justify-center text-2xl text-white mb-6">
+                    1
+                </div>
+                <h3 class="text-xl font-bold text-white mb-3">أدخل الرابط</h3>
+                <p class="text-gray-400">
+                    أدخل رابط الموقع الإلكتروني أو التطبيق الذي تريد فحصه
+                </p>
+            </div>
+
+            <div class="text-center">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-r from-primary to-secondary mx-auto flex items-center justify-center text-2xl text-white mb-6">
+                    2
+                </div>
+                <h3 class="text-xl font-bold text-white mb-3">اختر نوع الفحص</h3>
+                <p class="text-gray-400">
+                    اختر بين فحص صفحة واحدة أو فحص كامل الموقع
+                </p>
+            </div>
+
+            <div class="text-center">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-r from-primary to-secondary mx-auto flex items-center justify-center text-2xl text-white mb-6">
+                    3
+                </div>
+                <h3 class="text-xl font-bold text-white mb-3">احصل على النتائج</h3>
+                <p class="text-gray-400">
+                    استلم تقريراً مفصلاً بالثغرات الأمنية والحلول المقترحة
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+</center>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fullScanRadio = document.getElementById('scan_full');
+    const maxPagesGroup = document.getElementById('maxPagesGroup');
+
+    fullScanRadio.addEventListener('change', function() {
+        if (this.checked) {
+            maxPagesGroup.style.display = 'block';
+        }
+    });
+
+    document.getElementById('scan_single').addEventListener('change', function() {
+        if (this.checked) {
+            maxPagesGroup.style.display = 'none';
+        }
+    });
+});
+</script>
+
+<style>
+    .card-hover {
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+    }
+
+    .gradient-bg {
+        background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%);
+    }
+</style>
+{% endblock %}

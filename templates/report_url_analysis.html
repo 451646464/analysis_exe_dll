@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}تقرير تحليل الرابط - {{ results.url }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- شريط العنوان -->
+    <div class="gradient-bg rounded-xl p-6 text-white shadow-lg mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold">تقرير تحليل الرابط</h1>
+                <p class="opacity-90 mt-1">نتيجة الفحص الأمني للرابط: {{ results.url }}</p>
+            </div>
+            <div class="mt-4 md:mt-0 text-center">
+                <div class="text-sm opacity-80">تاريخ التقرير</div>
+                <div class="text-lg font-semibold">{{ current_time }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- النتيجة النهائية -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 mb-8 card-hover">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+                <h2 class="text-xl font-bold mb-4 {% if results.final.status %}text-green-600{% else %}text-red-600{% endif %}">
+                    <i class="fas fa-clipboard-check mr-2"></i>النتيجة النهائية
+                </h2>
+                <div class="flex items-center">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-r {% if results.final.status %}from-green-500 to-teal-500{% else %}from-red-500 to-orange-500{% endif %} flex items-center justify-center mr-4">
+                        <i class="fas {% if results.final.status %}fa-shield-check{% else %}fa-shield-exclamation{% endif %} text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg text-white">{{ results.final.message }}</h3>
+                        <p class="text-gray-300 mt-2">
+                            {% if results.final.status %}
+                            الرابط يبدو آمناً وفقاً لمعايير التحليل، يمكنك الاستمرار في استخدامه.
+                            {% else %}
+                            الرابط مشبوه وقد يشكل خطراً على أمانك، يوصى بعدم زيارة هذا الرابط أو إدخال أي معلومات شخصية.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 md:mt-0">
+                <span class="px-6 py-3 rounded-full text-xl font-bold
+                    {% if results.final.status %} bg-green-900 text-green-200
+                    {% else %} bg-red-900 text-red-200 {% endif %}">
+                    {% if results.final.status %}آمن{% else %}غير آمن{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- تفاصيل التحليل -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 mb-8 card-hover">
+        <h2 class="text-xl font-bold text-white mb-6 pb-2 border-b border-gray-600">
+            <i class="fas fa-chart-bar mr-2"></i>تفاصيل التحليل
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- فحص شهادة SSL -->
+            <div class="bg-gray-800/70 backdrop-blur-sm rounded-xl p-5 border-t-4 {% if results.ssl.status %}border-green-500{% else %}border-red-500{% endif %}">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-r {% if results.ssl.status %}from-green-500 to-teal-500{% else %}from-red-500 to-orange-500{% endif %} flex items-center justify-center mr-3">
+                        <i class="fas fa-shield-alt text-white"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg text-white">فحص شهادة SSL</h3>
+                </div>
+                <p class="text-gray-300 mb-4">{{ results.ssl.message }}</p>
+                <span class="px-4 py-1 rounded-full text-sm font-medium
+                    {% if results.ssl.status %} bg-green-900 text-green-200
+                    {% else %} bg-red-900 text-red-200 {% endif %}">
+                    {% if results.ssl.status %}آمن{% else %}غير آمن{% endif %}
+                </span>
+            </div>
+
+            <!-- نموذج التصنيف -->
+            <div class="bg-gray-800/70 backdrop-blur-sm rounded-xl p-5 border-t-4 {% if results.model.prediction == 1 %}border-green-500{% else %}border-red-500{% endif %}">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-r {% if results.model.prediction == 1 %}from-green-500 to-teal-500{% else %}from-red-500 to-orange-500{% endif %} flex items-center justify-center mr-3">
+                        <i class="fas fa-robot text-white"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg text-white">نموذج التصنيف</h3>
+                </div>
+                <p class="text-gray-300 mb-4">التصنيف: {{ results.model.label }}</p>
+                <span class="px-4 py-1 rounded-full text-sm font-medium
+                    {% if results.model.prediction == 1 %} bg-green-900 text-green-200
+                    {% else %} bg-red-900 text-red-200 {% endif %}">
+                    {{ results.model.label }}
+                </span>
+            </div>
+
+            <!-- تحليل المحتوى النصي -->
+            <div class="bg-gray-800/70 backdrop-blur-sm rounded-xl p-5 border-t-4 {% if results.content.status %}border-green-500{% else %}border-red-500{% endif %}">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-r {% if results.content.status %}from-green-500 to-teal-500{% else %}from-red-500 to-orange-500{% endif %} flex items-center justify-center mr-3">
+                        <i class="fas fa-text-height text-white"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg text-white">تحليل المحتوى النصي</h3>
+                </div>
+                <p class="text-gray-300 mb-4">{{ results.content.message }}</p>
+                <span class="px-4 py-1 rounded-full text-sm font-medium
+                    {% if results.content.status %} bg-green-900 text-green-200
+                    {% else %} bg-red-900 text-red-200 {% endif %}">
+                    {% if results.content.status %}آمن{% else %}مشبوه{% endif %}
+                </span>
+            </div>
+
+            <!-- تحليل HTML -->
+            <div class="bg-gray-800/70 backdrop-blur-sm rounded-xl p-5 border-t-4 {% if results.html.status %}border-green-500{% else %}border-red-500{% endif %}">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-r {% if results.html.status %}from-green-500 to-teal-500{% else %}from-red-500 to-orange-500{% endif %} flex items-center justify-center mr-3">
+                        <i class="fas fa-code text-white"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg text-white">تحليل HTML</h3>
+                </div>
+                <p class="text-gray-300 mb-4">{{ results.html.message }}</p>
+                <span class="px-4 py-1 rounded-full text-sm font-medium
+                    {% if results.html.status %} bg-green-900 text-green-200
+                    {% else %} bg-red-900 text-red-200 {% endif %}">
+                    {% if results.html.status %}آمن{% else %}مشبوه{% endif %}
+                </span>
+            </div>
+
+            <!-- فحص جافاسكريبت -->
+            <div class="bg-gray-800/70 backdrop-blur-sm rounded-xl p-5 border-t-4 {% if results.javascript.status %}border-green-500{% else %}border-red-500{% endif %}">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-r {% if results.javascript.status %}from-green-500 to-teal-500{% else %}from-red-500 to-orange-500{% endif %} flex items-center justify-center mr-3">
+                        <i class="fab fa-js text-white"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg text-white">فحص جافاسكريبت</h3>
+                </div>
+                <p class="text-gray-300 mb-4">{{ results.javascript.message }}</p>
+                <span class="px-4 py-1 rounded-full text-sm font-medium
+                    {% if results.javascript.status %} bg-green-900 text-green-200
+                    {% else %} bg-red-900 text-red-200 {% endif %}">
+                    {% if results.javascript.status %}آمن{% else %}مشبوه{% endif %}
+                </span>
+            </div>
+
+            <!-- فحص VirusTotal -->
+            <div class="bg-gray-800/70 backdrop-blur-sm rounded-xl p-5 border-t-4
+                {% if results.vt.status == True %}border-green-500
+                {% elif results.vt.status == False %}border-red-500
+                {% else %}border-yellow-500{% endif %}">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-r
+                        {% if results.vt.status == True %}from-green-500 to-teal-500
+                        {% elif results.vt.status == False %}from-red-500 to-orange-500
+                        {% else %}from-yellow-500 to-amber-500{% endif %} flex items-center justify-center mr-3">
+                        <i class="fas fa-shield-virus text-white"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg text-white">فحص VirusTotal</h3>
+                </div>
+                <div class="text-gray-300 mb-4">
+                    {% if results.vt.message %}
+                        {{ results.vt.message|safe }}
+                    {% else %}
+                        <p>لم يتم إجراء الفحص</p>
+                    {% endif %}
+                </div>
+                <span class="px-4 py-1 rounded-full text-sm font-medium
+                    {% if results.vt.status == True %} bg-green-900 text-green-200
+                    {% elif results.vt.status == False %} bg-red-900 text-red-200
+                    {% else %} bg-yellow-900 text-yellow-200{% endif %}">
+                    {% if results.vt.status == True %}آمن
+                    {% elif results.vt.status == False %}مشبوه
+                    {% else %}غير متوفر{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- التوصيات الأمنية -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 mb-8 card-hover">
+        <h2 class="text-xl font-bold text-white mb-6 pb-2 border-b border-gray-600">
+            <i class="fas fa-lightbulb mr-2"></i> التوصيات الأمنية
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-800/70 backdrop-blur-sm rounded-xl p-5 border border-blue-500">
+                <h3 class="font-semibold text-blue-400 mb-4">
+                    <i class="fas fa-shield-alt mr-2"></i> إجراءات الوقاية
+                </h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-400 mt-1 mr-2"></i>
+                        <span class="text-gray-300">تحديث البرمجيات والأنظمة باستمرار</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-400 mt-1 mr-2"></i>
+                        <span class="text-gray-300">استخدام جدران الحماية وتطبيقات WAF</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-400 mt-1 mr-2"></i>
+                        <span class="text-gray-300">تنفيذ سياسات كلمات مرور قوية</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-400 mt-1 mr-2"></i>
+                        <span class="text-gray-300">تفعيل المصادقة الثنائية</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-400 mt-1 mr-2"></i>
+                        <span class="text-gray-300">إجراء فحوصات أمنية دورية</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-gray-800/70 backdrop-blur-sm rounded-xl p-5 border border-red-500">
+                <h3 class="font-semibold text-red-400 mb-4">
+                    <i class="fas fa-exclamation-triangle mr-2"></i> إجراءات العلاج
+                </h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-red-400 mt-1 mr-2"></i>
+                        <span class="text-gray-300">إصلاح الثغرات المكتشفة فوراً</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-red-400 mt-1 mr-2"></i>
+                        <span class="text-gray-300">مراجعة أذونات المستخدمين والصلاحيات</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-red-400 mt-1 mr-2"></i>
+                        <span class="text-gray-300">فحص السجلات لاكتشاف أي اختراقات</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-red-400 mt-1 mr-2"></i>
+                        <span class="text-gray-300">تشفير البيانات الحساسة</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-red-400 mt-1 mr-2"></i>
+                        <span class="text-gray-300">إنشاء نسخ احتياطية دورية</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- خيارات التقرير -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-blue-500 card-hover">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
+            <i class="fas fa-cog mr-2"></i> خيارات التقرير
+        </h2>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{{ url_for('url_analysis') }}"
+               class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-all flex items-center justify-center">
+                <i class="fas fa-redo mr-2"></i> تحليل رابط آخر
+            </a>
+
+            <a href="#"
+               class="px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white font-medium rounded-lg hover:from-green-700 hover:to-teal-700 transition-all flex items-center justify-center">
+                <i class="fas fa-file-pdf mr-2"></i> حفظ كـ PDF
+            </a>
+<!-- زر حذف التقرير -->
+
+            <button id="share-report-btn"
+                    class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-700 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-800 transition-all flex items-center justify-center">
+                <i class="fas fa-share-alt mr-2"></i> مشاركة التقرير
+            </button>
+        </div>
+    </div>
+</div>
+<script>
+function confirmDelete(reportType, reportId) {
+    if (confirm('هل أنت متأكد من أنك تريد حذف هذا التقرير؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        deleteReport(reportType, reportId);
+    }
+}
+
+function deleteReport(reportType, reportId) {
+    let endpoint = '';
+    switch(reportType) {
+        case 'sample':
+            endpoint = `/delete_sample_report/${reportId}`;
+            break;
+        case 'web':
+            endpoint = `/delete_web_report/${reportId}`;
+            break;
+        case 'url':
+            endpoint = `/delete_url_report/${reportId}`;
+            break;
+        case 'code':
+            endpoint = `/delete_code_report/${reportId}`;
+            break;
+        case 'pdf':
+            endpoint = `/delete_pdf_report/${reportId}`;
+            break;
+        default:
+            alert('نوع التقرير غير معروف');
+            return;
+    }
+
+    fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم حذف التقرير بنجاح');
+            window.location.href = "/dashboard";
+        } else {
+            alert('فشل في حذف التقرير: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء محاولة الحذف');
+    });
+}
+</script>
+<script>
+    // فتح نموذج المشاركة
+    document.getElementById('share-report-btn').addEventListener('click', function() {
+        alert('سيتم تنفيذ وظيفة المشاركة هنا. هذه وظيفة تجريبية فقط.');
+    });
+</script>
+
+<style>
+    .card-hover {
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+    }
+
+    .gradient-bg {
+        background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%);
+    }
+</style>
+{% endblock %}

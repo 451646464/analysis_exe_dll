@@ -1,0 +1,435 @@
+<!-- report_web_code_analysis.html -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <title>تقرير تحليل الثغرات الأمنية</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --danger-color: #f72585;
+            --warning-color: #f8961e;
+            --success-color: #4cc9f0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+
+        body {
+            background: linear-gradient(135deg, #001224 0%, #1b0847 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .report-header {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: rgb(19, 2, 42);
+            padding: 2.5rem 0;
+            border-radius: 0 0 30px 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            border: none;
+            margin-bottom: 25px;
+        }
+
+        .card-header {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+        }
+
+        .btn-download {
+            background: linear-gradient(90deg, var(--success-color), #4895ef);
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-download:hover {
+            background: linear-gradient(90deg, #4895ef, var(--success-color));
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(67, 97, 238, 0.3);
+        }
+
+        .vulnerability-item {
+            border-left: 4px solid;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            color:white;
+            background-color: #13023c;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
+        }
+
+        .vulnerability-item:hover {
+            transform: translateX(-5px);
+        }
+
+        .severity-high {
+            border-left-color: var(--danger-color);
+        }
+
+        .severity-medium {
+            border-left-color: var(--warning-color);
+        }
+
+        .severity-low {
+            border-left-color: var(--success-color);
+        }
+
+        .severity-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .badge-high {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .badge-medium {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .badge-low {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .progress {
+            height: 12px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .solution-box {
+            background-color: #e8f4fc;
+            border-left: 4px solid var(--success-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .summary-card {
+            border-radius: 15px;
+            overflow: hidden;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .summary-danger {
+            background: linear-gradient(135deg, var(--danger-color), #b5179e);
+        }
+
+        .summary-warning {
+            background: linear-gradient(135deg, var(--warning-color), #f3722c);
+        }
+
+        .summary-success {
+            background: linear-gradient(135deg, var(--success-color), #4895ef);
+        }
+
+        .summary-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .code-preview {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            max-height: 300px;
+            overflow: auto;
+            direction: ltr;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <!-- Report Header -->
+    <div class="report-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-4 fw-bold"><i class="fas fa-file-alt me-3"></i>تقرير تحليل الثغرات الأمنية</h1>
+                    <p class="lead">نتائج تحليل الكود وتفاصيل الثغرات المكتشفة</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <a href="/" class="btn btn-light btn-lg">
+                        <i class="fas fa-arrow-left me-2"></i>تحليل جديد
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="summary-card summary-danger">
+                    <i class="fas fa-bug fa-3x"></i>
+                    <h3>الثغرات الحرجة</h3>
+                    <div class="summary-value">
+                        {% if vulnerabilities %}
+                            {{ vulnerabilities|length }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </div>
+                    <p>ثغرات تحتاج لمعالجة فورية</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="summary-card summary-warning">
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+                    <h3>المشكلات المتوسطة</h3>
+                    <div class="summary-value">
+                        {% if result and result.total_flags %}
+                            {{ result.total_flags }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </div>
+                    <p>مشكلات أمنية محتملة</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="summary-card summary-success">
+                    <i class="fas fa-shield-alt fa-3x"></i>
+                    <h3>نسبة الأمان</h3>
+                    <div class="summary-value">
+                        {% if result and result.confidence %}
+                            {{ 100 - result.confidence|round|int }}%
+                        {% else %}
+                            100%
+                        {% endif %}
+                    </div>
+                    <p>مستوى أمان الكود الإجمالي</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Static Analysis Results -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-search me-2"></i>نتائج التحليل الثابت
+                    </div>
+                    <div class="card-body">
+                        {% if vulnerabilities %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                تم اكتشاف {{ vulnerabilities|length }} ثغرة أمنية تحتاج إلى معالجة
+                            </div>
+
+                            {% for vuln in vulnerabilities %}
+                                <div class="vulnerability-item severity-{{ 'high' if vuln.severity == 'عالي' else 'medium' }}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5>{{ vuln.name }}</h5>
+                                        <span class="severity-badge badge-{{ 'high' if vuln.severity == 'عالي' else 'medium' }}">
+                                            {{ vuln.severity }}
+                                        </span>
+                                    </div>
+                                    <p class="mt-2">{{ vuln.description }}</p>
+                                    <div class="solution-box">
+                                        <h6><i class="fas fa-lightbulb me-2"></i>الحل المقترح:</h6>
+                                        <p>{{ vuln.solution }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                لا توجد ثغرات أمنية حرجة مكتشفة في التحليل الثابت
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Model Analysis Results -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <i class="fas fa-brain me-2"></i>نتائج تحليل الذكاء الاصطناعي
+                    </div>
+                    <div class="card-body">
+                        {% if result and result.predictions %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                توزيع الثغرات المحتملة بناءً على تحليل النموذج
+                            </div>
+
+                            <div id="chart" class="mb-4"></div>
+
+                            {% for vuln, prob in result.predictions.items() %}
+                                <div class="vulnerability-item severity-medium">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5>{{ vuln }}</h5>
+                                        <span class="fw-bold">{{ prob }}%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar"
+                                            style="width: {{ prob }}%;"
+                                            aria-valuenow="{{ prob }}"
+                                            aria-valuemin="0"
+                                            aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                لا توجد توقعات للثغرات من نموذج الذكاء الاصطناعي
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Code Preview -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-code me-2"></i>معاينة الكود
+                    </div>
+                    <div class="card-body">
+                        <div class="code-preview">
+                            {{ code|truncate(500) }}
+                        </div>
+                        <p class="text-muted mt-2">تم تحليل {{ code|length }} حرف من الكود</p>
+                    </div>
+                </div>
+
+                <!-- Download Report -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-download me-2"></i>تحميل التقرير
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="text-muted">يمكنك تحميل تقرير مفصل بصيغة PDF يحتوي على جميع النتائج والحلول</p>
+                        <form method="POST" action="">
+                            <input type="hidden" name="code" value="{{ code }}">
+                            <input type="hidden" name="result" value="{{ result.raw if result else '' }}">
+                            <button type="submit" name="generate_pdf" class="btn btn-download mt-3">
+                                <i class="fas fa-file-pdf me-2"></i>تحميل التقرير PDF
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <i class="fas fa-lightbulb me-2"></i>توصيات أمنية
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                قم بتحديث المكتبات والبرامج المستخدمة باستمرار
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                استخدم استعلامات معلمة (Parameterized Queries) للتعامل مع قواعد البيانات
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                قم بتصفية مدخلات المستخدم قبل معالجتها
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                استخدم HTTPS لتشفير البيانات المنقولة
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                نفذ سياسات أمنية صارمة للتحكم في الوصول
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+function confirmDelete(reportType, reportId) {
+    if (confirm('هل أنت متأكد من أنك تريد حذف هذا التقرير؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        deleteReport(reportType, reportId);
+    }
+}
+
+function deleteReport(reportType, reportId) {
+    let endpoint = '';
+    switch(reportType) {
+        case 'sample':
+            endpoint = `/delete_sample_report/${reportId}`;
+            break;
+        case 'web':
+            endpoint = `/delete_web_report/${reportId}`;
+            break;
+        case 'url':
+            endpoint = `/delete_url_report/${reportId}`;
+            break;
+        case 'code':
+            endpoint = `/delete_code_report/${reportId}`;
+            break;
+        case 'pdf':
+            endpoint = `/delete_pdf_report/${reportId}`;
+            break;
+        default:
+            alert('نوع التقرير غير معروف');
+            return;
+    }
+
+    fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم حذف التقرير بنجاح');
+            window.location.href = "/dashboard";
+        } else {
+            alert('فشل في حذف التقرير: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء محاولة الحذف');
+    });
+}
+</script>
+    <script>
+        // Render the chart if available
+        {% if graphJSON %}
+            var graph = {{ graphJSON | safe }};
+            Plotly.newPlot('chart', graph, {});
+        {% endif %}
+    </script>
+</body>
+</html>

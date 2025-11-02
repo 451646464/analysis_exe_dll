@@ -1,0 +1,1005 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة التحكم{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">لوحة تحكم المسؤول</h1>
+
+    <!-- بطاقات إحصائيات الأمان -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- بطاقة العينات -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-blue-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">إجمالي العينات</p>
+                    <p class="text-3xl font-bold">{{ total_samples }}</p>
+                </div>
+                <div class="bg-blue-150 p-3 rounded-full">
+                    <i class="fas fa-file text-blue-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة العينات الآمنة -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-green-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">العينات الآمنة</p>
+                    <p class="text-3xl font-bold">{{ benign_samples }}</p>
+                </div>
+                <div class="bg-green-150 p-3 rounded-full">
+                    <i class="fas fa-shield-alt text-green-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة العينات الخبيثة -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-red-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">العينات الخبيثة</p>
+                    <p class="text-3xl font-bold">{{ malicious_samples }}</p>
+                </div>
+                <div class="bg-red-150 p-3 rounded-full">
+                    <i class="fas fa-bug text-red-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة تحليلات الويب -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-purple-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">إجمالي تحليلات الويب</p>
+                    <p class="text-3xl font-bold">{{ web_analyses_count }}</p>
+                </div>
+                <div class="bg-purple-150 p-3 rounded-full">
+                    <i class="fas fa-globe text-purple-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة النطاقات الآمنة -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-teal-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">نطاقات آمنة</p>
+                    <p class="text-3xl font-bold">{{ safe_domains }}</p>
+                </div>
+                <div class="bg-teal-150 p-3 rounded-full">
+                    <i class="fas fa-lock text-teal-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة الثغرات المكتشفة -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-amber-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">ثغرات مكتشفة</p>
+                    <p class="text-3xl font-bold">{{ vulnerabilities_count }}</p>
+                </div>
+                <div class="bg-amber-150 p-3 rounded-full">
+                    <i class="fas fa-exclamation-triangle text-amber-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة تحليلات الروابط -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-indigo-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">تحليلات الروابط</p>
+                    <p class="text-3xl font-bold">{{ url_analyses_count }}</p>
+                </div>
+                <div class="bg-indigo-150 p-3 rounded-full">
+                    <i class="fas fa-link text-indigo-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة الروابط الآمنة -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-emerald-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">روابط آمنة</p>
+                    <p class="text-3xl font-bold">{{ safe_urls }}</p>
+                </div>
+                <div class="bg-emerald-150 p-3 rounded-full">
+                    <i class="fas fa-shield-check text-emerald-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة الروابط المشبوهة -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-rose-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">روابط مشبوهة</p>
+                    <p class="text-3xl font-bold">{{ malicious_urls }}</p>
+                </div>
+                <div class="bg-rose-150 p-3 rounded-full">
+                    <i class="fas fa-triangle-exclamation text-rose-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة تحليلات الكود -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-indigo-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">تحليلات الكود</p>
+                    <p class="text-3xl font-bold">{{ code_analyses_count }}</p>
+                </div>
+                <div class="bg-indigo-150 p-3 rounded-full">
+                    <i class="fas fa-code text-indigo-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة تحليلات الصور -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-pink-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">تحليلات الصور</p>
+                    <p class="text-3xl font-bold">{{ image_analyses_count }}</p>
+                </div>
+                <div class="bg-pink-150 p-3 rounded-full">
+                    <i class="fas fa-image text-pink-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة الصور الآمنة -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-green-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">صور آمنة</p>
+                    <p class="text-3xl font-bold">{{ safe_images }}</p>
+                </div>
+                <div class="bg-green-150 p-3 rounded-full">
+                    <i class="fas fa-image text-green-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة الصور المشبوهة -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-red-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">صور مشبوهة</p>
+                    <p class="text-3xl font-bold">{{ malicious_images }}</p>
+                </div>
+                <div class="bg-red-150 p-3 rounded-full">
+                    <i class="fas fa-image text-red-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة تحليلات PDF -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-orange-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">تحليلات PDF</p>
+                    <p class="text-3xl font-bold">{{ pdf_analyses_count }}</p>
+                </div>
+                <div class="bg-orange-150 p-3 rounded-full">
+                    <i class="fas fa-file-pdf text-orange-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة PDFs الآمنة -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-green-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">PDFs آمنة</p>
+                    <p class="text-3xl font-bold">{{ safe_pdfs }}</p>
+                </div>
+                <div class="bg-green-150 p-3 rounded-full">
+                    <i class="fas fa-file-pdf text-green-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة PDFs المشبوهة -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-red-500 card-hover">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-white font-bold">PDFs مشبوهة</p>
+                    <p class="text-3xl font-bold">{{ malicious_pdfs }}</p>
+                </div>
+                <div class="bg-red-150 p-3 rounded-full">
+                    <i class="fas fa-file-pdf text-red-500 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- قسم المخططات -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- مخطط توزيع العينات -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-blue-500 card-hover">
+            <h2 class="text-white font-bold mb-4 text-2xl">توزيع العينات</h2>
+            <div class="w-full h-64 relative">
+                <canvas id="samplesChart"></canvas>
+                {% if benign_samples == 0 and malicious_samples == 0 %}
+                <div class="absolute inset-0 flex items-center justify-center bg-gray-800/50 rounded-lg">
+                    <p class="text-gray-400 text-lg">لا توجد بيانات للعرض</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- مخطط توزيع تحليلات الويب -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-purple-500 card-hover">
+            <h2 class="text-white font-bold mb-4 text-2xl">توزيع تحليلات الويب</h2>
+            <div class="w-full h-64 relative">
+                <canvas id="webAnalysesChart"></canvas>
+                {% if safe_domains == 0 and vulnerable_domains == 0 %}
+                <div class="absolute inset-0 flex items-center justify-center bg-gray-800/50 rounded-lg">
+                    <p class="text-gray-400 text-lg">لا توجد بيانات للعرض</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- مخطط توزيع تحليلات الروابط -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-indigo-500 card-hover">
+            <h2 class="text-white font-bold mb-4 text-2xl">توزيع تحليلات الروابط</h2>
+            <div class="w-full h-64 relative">
+                <canvas id="urlAnalysesChart"></canvas>
+                {% if safe_urls == 0 and malicious_urls == 0 %}
+                <div class="absolute inset-0 flex items-center justify-center bg-gray-800/50 rounded-lg">
+                    <p class="text-gray-400 text-lg">لا توجد بيانات للعرض</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- مخطط توزيع تحليلات الكود -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-indigo-500 card-hover">
+            <h2 class="text-white font-bold mb-4 text-2xl">توزيع تحليلات الكود</h2>
+            <div class="w-full h-64 relative">
+                <canvas id="codeAnalysesChart"></canvas>
+                {% if secure_code == 0 and vulnerable_code == 0 %}
+                <div class="absolute inset-0 flex items-center justify-center bg-gray-800/50 rounded-lg">
+                    <p class="text-gray-400 text-lg">لا توجد بيانات للعرض</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- مخطط توزيع تحليلات الصور -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-pink-500 card-hover">
+            <h2 class="text-white font-bold mb-4 text-2xl">توزيع تحليلات الصور</h2>
+            <div class="w-full h-64 relative">
+                <canvas id="imageAnalysesChart"></canvas>
+                {% if safe_images == 0 and malicious_images == 0 %}
+                <div class="absolute inset-0 flex items-center justify-center bg-gray-800/50 rounded-lg">
+                    <p class="text-gray-400 text-lg">لا توجد بيانات للعرض</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- مخطط توزيع تحليلات PDF -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-orange-500 card-hover">
+            <h2 class="text-white font-bold mb-4 text-2xl">توزيع تحليلات PDF</h2>
+            <div class="w-full h-64 relative">
+                <canvas id="pdfAnalysesChart"></canvas>
+                {% if safe_pdfs == 0 and malicious_pdfs == 0 %}
+                <div class="absolute inset-0 flex items-center justify-center bg-gray-800/50 rounded-lg">
+                    <p class="text-gray-400 text-lg">لا توجد بيانات للعرض</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- قسم الجداول -->
+    <div class="grid grid-cols-1 gap-6 mb-8">
+        <!-- جدول العينات المحللة -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-yellow-500 card-hover">
+            <h2 class="text-xl font-bold text-white mb-4">أحدث العينات المحللة</h2>
+            {% if latest_samples %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-800/40">
+                    <thead class="bg-gray-800/50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الملف</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الحجم</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">التاريخ</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">النتيجة</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-gray-700/40 divide-y divide-gray-200">
+                        {% for sample in latest_samples %}
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center
+                                        {% if sample.is_malicious %} bg-red-100 text-red-600
+                                        {% else %} bg-green-100 text-green-600 {% endif %} mr-2">
+                                        <i class="fas fa-file"></i>
+                                    </div>
+                                    <span class="truncate max-w-xs">{{ sample.filename }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                {{ sample.file_size // 1024 }} ك.ب
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                {{ sample.upload_date.strftime('%Y-%m-%d') }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    {% if sample.is_malicious %} bg-red-100 text-red-800
+                                    {% else %} bg-green-100 text-green-800 {% endif %}">
+                                    {{ sample.prediction }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                                <a href="{{ url_for('sample_detail', sample_id=sample.id) }}" class="text-blue-600 hover:text-blue-900">عرض</a>
+                                <a href="{{ url_for('generate_pdf', sample_id=sample.id) }}" class="text-green-600 hover:text-green-900 ml-2">PDF</a>
+                                <button onclick="confirmDelete('sample', {{ sample.id }})" class="text-red-600 hover:text-red-900 ml-2">حذف</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="bg-gray-700/30 rounded-lg p-6 text-center">
+                <i class="fas fa-exclamation-circle text-gray-400 text-4xl mb-3"></i>
+                <p class="text-gray-300">لا توجد عينات محللة بعد</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- جدول تحليلات الويب -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-purple-500 card-hover">
+            <h2 class="text-xl font-bold text-white mb-4">سجل تحليلات الويب</h2>
+            {% if web_analyses %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-800/40">
+                    <thead class="bg-gray-800/50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">التاريخ</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">النطاق</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">نوع الفحص</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">عدد الروابط</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">روابط معرضة</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-gray-700/40 divide-y divide-gray-200">
+                        {% for analysis in web_analyses %}
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                {{ analysis.scan_date.strftime('%Y-%m-%d %H:%M') }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center
+                                        {% if analysis.vulnerable_links > 0 %} bg-red-100 text-red-600
+                                        {% else %} bg-green-100 text-green-600 {% endif %} mr-2">
+                                        <i class="fas fa-globe"></i>
+                                    </div>
+                                    <span>{{ analysis.domain }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                {% if analysis.scan_type == 'full' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    نطاق كامل
+                                </span>
+                                {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                    رابط واحد
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                {{ analysis.total_links }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                {% if analysis.vulnerable_links > 0 %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    {{ analysis.vulnerable_links }}
+                                </span>
+                                {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    0
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                                <a href="{{ url_for('web_analysis_report', analysis_id=analysis.id) }}"
+                                   class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-file-alt"></i> التقرير
+                                </a>
+                                <button onclick="confirmDelete('web', {{ analysis.id }})" class="text-red-600 hover:text-red-900 ml-2">حذف</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="bg-gray-700/30 rounded-lg p-6 text-center">
+                <i class="fas fa-exclamation-circle text-gray-400 text-4xl mb-3"></i>
+                <p class="text-gray-300">لم تقم بإجراء أي تحليلات ويب بعد</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- جدول تحليلات الروابط -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-indigo-500 card-hover">
+            <h2 class="text-xl font-bold text-white mb-4">أحدث تحليلات الروابط</h2>
+            {% if url_analyses %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-800/40">
+                    <thead class="bg-gray-800/50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">التاريخ</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الرابط</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">النتيجة</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-gray-700/40 divide-y divide-gray-200">
+                        {% for analysis in url_analyses %}
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                {{ analysis.scan_date.strftime('%Y-%m-%d %H:%M') }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center
+                                        {% if analysis.is_malicious %} bg-red-100 text-red-600
+                                        {% else %} bg-green-100 text-green-600 {% endif %} mr-2">
+                                        <i class="fas fa-link"></i>
+                                    </div>
+                                    <span class="truncate max-w-xs">{{ analysis.url }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    {% if analysis.is_malicious %} bg-red-100 text-red-800
+                                    {% else %} bg-green-100 text-green-800 {% endif %}">
+                                    {{ analysis.final_result }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                                <a href="{{ url_for('report_url_analysis', analysis_id=analysis.id) }}"
+                                   class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-file-alt"></i> التقرير
+                                </a>
+                                <button onclick="confirmDelete('url', {{ analysis.id }})" class="text-red-600 hover:text-red-900 ml-2">حذف</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="bg-gray-700/30 rounded-lg p-6 text-center">
+                <i class="fas fa-exclamation-circle text-gray-400 text-4xl mb-3"></i>
+                <p class="text-gray-300">لم تقم بإجراء أي تحليلات روابط بعد</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- جدول تحليلات الكود -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-indigo-500 card-hover">
+            <h2 class="text-xl font-bold text-white mb-4">أحدث تحليلات الكود</h2>
+            {% if code_analyses %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-800/40">
+                    <thead class="bg-gray-800/50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">النوع</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">التاريخ</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الثغرات</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-gray-700/40 divide-y divide-gray-200">
+                        {% for analysis in code_analyses %}
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                {% if analysis.analysis_type == 'code' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    كود
+                                </span>
+                                {% elif analysis.analysis_type == 'url' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                    رابط
+                                </span>
+                                {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                    ملف
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                {{ analysis.analysis_date.strftime('%Y-%m-%d %H:%M') }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                {% set vuln_count = analysis.get_vulnerabilities()|length %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    {% if vuln_count > 0 %} bg-red-100 text-red-800
+                                    {% else %} bg-green-100 text-green-800 {% endif %}">
+                                    {{ vuln_count }} ثغرة
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                                <a href="{{ url_for('report_web_code_analysis', analysis_id=analysis.id) }}"
+                                   class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-file-alt"></i> التقرير
+                                </a>
+                                <button onclick="confirmDelete('code', {{ analysis.id }})" class="text-red-600 hover:text-red-900 ml-2">حذف</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="bg-gray-700/30 rounded-lg p-6 text-center">
+                <i class="fas fa-exclamation-circle text-gray-400 text-4xl mb-3"></i>
+                <p class="text-gray-300">لم تقم بإجراء أي تحليلات كود بعد</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- جدول تحليلات الصور -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-pink-500 card-hover">
+            <h2 class="text-xl font-bold text-white mb-4">أحدث تحليلات الصور</h2>
+            {% if latest_image_analyses %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-800/40">
+                    <thead class="bg-gray-800/50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الملف</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الحجم</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">التاريخ</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">النتيجة</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-gray-700/40 divide-y divide-gray-200">
+                        {% for analysis in latest_image_analyses %}
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center
+                                        {% if analysis.is_malicious %} bg-red-100 text-red-600
+                                        {% else %} bg-green-100 text-green-600 {% endif %} mr-2">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                    <span class="truncate max-w-xs">{{ analysis.filename }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                {{ analysis.file_size // 1024 }} ك.ب
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                {{ analysis.upload_date.strftime('%Y-%m-%d') }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    {% if analysis.is_malicious %} bg-red-100 text-red-800
+                                    {% else %} bg-green-100 text-green-800 {% endif %}">
+                                    {% if analysis.is_malicious %}ضار{% else %}آمن{% endif %}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                                <a href="{{ url_for('image_report', analysis_id=analysis.id) }}" class="text-blue-600 hover:text-blue-900">عرض</a>
+                                <button onclick="confirmDelete('image', {{ analysis.id }})" class="text-red-600 hover:text-red-900 ml-2">حذف</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="bg-gray-700/30 rounded-lg p-6 text-center">
+                <i class="fas fa-exclamation-circle text-gray-400 text-4xl mb-3"></i>
+                <p class="text-gray-300">لم تقم بإجراء أي تحليلات صور بعد</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- جدول تحليلات PDF -->
+        <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-orange-500 card-hover">
+            <h2 class="text-xl font-bold text-white mb-4">أحدث تحليلات PDF</h2>
+            {% if latest_pdf_analyses %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-800/40">
+                    <thead class="bg-gray-800/50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الملف</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الحجم</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">التاريخ</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">النتيجة</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-gray-700/40 divide-y divide-gray-200">
+                        {% for analysis in latest_pdf_analyses %}
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center
+                                        {% if analysis.is_malicious %} bg-red-100 text-red-600
+                                        {% else %} bg-green-100 text-green-600 {% endif %} mr-2">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </div>
+                                    <span class="truncate max-w-xs">{{ analysis.filename }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                {{ analysis.file_size // 1024 }} ك.ب
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                {{ analysis.upload_date.strftime('%Y-%m-%d') }}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    {% if analysis.is_malicious %} bg-red-100 text-red-800
+                                    {% else %} bg-green-100 text-green-800 {% endif %}">
+                                    {% if analysis.is_malicious %}ضار{% else %}آمن{% endif %}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                                <a href="{{ url_for('pdf_report', analysis_id=analysis.id) }}" class="text-blue-600 hover:text-blue-900">عرض</a>
+                                <button onclick="confirmDelete('pdf', {{ analysis.id }})" class="text-red-600 hover:text-red-900 ml-2">حذف</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="bg-gray-700/30 rounded-lg p-6 text-center">
+                <i class="fas fa-exclamation-circle text-gray-400 text-4xl mb-3"></i>
+                <p class="text-gray-300">لم تقم بإجراء أي تحليلات PDF بعد</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // مخطط توزيع العينات
+    if (document.getElementById('samplesChart')) {
+        const samplesCtx = document.getElementById('samplesChart').getContext('2d');
+        const samplesData = [{{ benign_samples }}, {{ malicious_samples }}];
+
+        if (samplesData[0] + samplesData[1] > 0) {
+            new Chart(samplesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['آمنة', 'خبيثة'],
+                    datasets: [{
+                        data: samplesData,
+                        backgroundColor: ['#10B981', '#EF4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            rtl: true,
+                            labels: {
+                                font: {
+                                    family: 'Tajawal, sans-serif'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw} عينة`;
+                                }
+                            },
+                            bodyFont: {
+                                family: 'Tajawal, sans-serif'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // مخطط توزيع تحليلات الويب
+    if (document.getElementById('webAnalysesChart')) {
+        const webCtx = document.getElementById('webAnalysesChart').getContext('2d');
+        const webData = [{{ safe_domains }}, {{ vulnerable_domains }}];
+
+        if (webData[0] + webData[1] > 0) {
+            new Chart(webCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['نطاقات آمنة', 'نطاقات معرضة'],
+                    datasets: [{
+                        data: webData,
+                        backgroundColor: ['#3B82F6', '#F59E0B'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            rtl: true,
+                            labels: {
+                                font: {
+                                    family: 'Tajawal, sans-serif'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw} نطاق`;
+                                }
+                            },
+                            bodyFont: {
+                                family: 'Tajawal, sans-serif'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // مخطط توزيع تحليلات الروابط
+    if (document.getElementById('urlAnalysesChart')) {
+        const urlCtx = document.getElementById('urlAnalysesChart').getContext('2d');
+        const urlData = [{{ safe_urls }}, {{ malicious_urls }}];
+
+        if (urlData[0] + urlData[1] > 0) {
+            new Chart(urlCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['آمنة', 'مشبوهة'],
+                    datasets: [{
+                        data: urlData,
+                        backgroundColor: ['#8B5CF6', '#EC4899'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            rtl: true,
+                            labels: {
+                                font: {
+                                    family: 'Tajawal, sans-serif'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw} رابط`;
+                                }
+                            },
+                            bodyFont: {
+                                family: 'Tajawal, sans-serif'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // مخطط توزيع تحليلات الكود
+    if (document.getElementById('codeAnalysesChart')) {
+        const codeCtx = document.getElementById('codeAnalysesChart').getContext('2d');
+        const codeData = [{{ secure_code }}, {{ vulnerable_code }}];
+
+        if (codeData[0] + codeData[1] > 0) {
+            new Chart(codeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['آمنة', 'معرضة'],
+                    datasets: [{
+                        data: codeData,
+                        backgroundColor: ['#3B82F6', '#F59E0B'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            rtl: true,
+                            labels: {
+                                font: {
+                                    family: 'Tajawal, sans-serif'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw} تحليل`;
+                                }
+                            },
+                            bodyFont: {
+                                family: 'Tajawal, sans-serif'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // مخطط توزيع تحليلات الصور
+    if (document.getElementById('imageAnalysesChart')) {
+        const imageCtx = document.getElementById('imageAnalysesChart').getContext('2d');
+        const imageData = [{{ safe_images }}, {{ malicious_images }}];
+
+        if (imageData[0] + imageData[1] > 0) {
+            new Chart(imageCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['آمنة', 'مشبوهة'],
+                    datasets: [{
+                        data: imageData,
+                        backgroundColor: ['#EC4899', '#8B5CF6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            rtl: true,
+                            labels: {
+                                font: {
+                                    family: 'Tajawal, sans-serif'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw} صورة`;
+                                }
+                            },
+                            bodyFont: {
+                                family: 'Tajawal, sans-serif'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // مخطط توزيع تحليلات PDF
+    if (document.getElementById('pdfAnalysesChart')) {
+        const pdfCtx = document.getElementById('pdfAnalysesChart').getContext('2d');
+        const pdfData = [{{ safe_pdfs }}, {{ malicious_pdfs }}];
+
+        if (pdfData[0] + pdfData[1] > 0) {
+            new Chart(pdfCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['آمنة', 'مشبوهة'],
+                    datasets: [{
+                        data: pdfData,
+                        backgroundColor: ['#10B981', '#EF4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            rtl: true,
+                            labels: {
+                                font: {
+                                    family: 'Tajawal, sans-serif'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw} ملف`;
+                                }
+                            },
+                            bodyFont: {
+                                family: 'Tajawal, sans-serif'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+});
+
+function confirmDelete(reportType, reportId) {
+    if (confirm('هل أنت متأكد من أنك تريد حذف هذا التقرير؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        deleteReport(reportType, reportId);
+    }
+}
+
+function deleteReport(reportType, reportId) {
+    let endpoint = '';
+    switch(reportType) {
+        case 'sample':
+            endpoint = `/delete_sample_report/${reportId}`;
+            break;
+        case 'web':
+            endpoint = `/delete_web_report/${reportId}`;
+            break;
+        case 'url':
+            endpoint = `/delete_url_report/${reportId}`;
+            break;
+        case 'code':
+            endpoint = `/delete_code_report/${reportId}`;
+            break;
+        case 'image':
+            endpoint = `/delete_image_report/${reportId}`;
+            break;
+        case 'pdf':
+            endpoint = `/delete_pdf_report/${reportId}`;
+            break;
+        default:
+            alert('نوع التقرير غير معروف');
+            return;
+    }
+
+    fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم حذف التقرير بنجاح');
+            location.reload();
+        } else {
+            alert('فشل في حذف التقرير: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء محاولة الحذف');
+    });
+}
+</script>
+{% endblock %}

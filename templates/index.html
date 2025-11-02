@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Malware Analysis Dashboard{% endblock %}
+
+{% block content %}
+<center>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20">
+    <!-- Hero Section -->
+    <div class="text-center py-16">
+        <h1 class="text-2xl font-extrabold text-white sm:text-3xl md:text-4xl">
+            <span class="block">Advanced Malware Analysis</span>
+            <span class="block bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary mt-3">
+                Threat Detection System
+            </span>
+        </h1>
+        <p class="mt-5 max-w-2xl mx-auto text-xl text-gray-300">
+            Comprehensive solution for analyzing executable files (EXE/DLL) and detecting malware using AI-powered techniques
+        </p>
+    </div>
+
+    <!-- Analysis Card -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-gray-700 card-hover">
+        <div class="gradient-bg p-8">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-shield-virus text-3xl text-white"></i>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-2xl font-bold text-white">Analyze New Sample</h2>
+                    <p class="mt-1 text-blue-100">Upload EXE or DLL file for analysis</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-8">
+            <form method="post" enctype="multipart/form-data" class="space-y-8">
+                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div>
+                    <label class="block text-lg font-medium text-gray-300 mb-4">Select File for Analysis:</label>
+                    <div class="flex items-center justify-center w-full">
+                        <label for="file-upload" class="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-600 rounded-2xl cursor-pointer bg-gray-900/50 hover:bg-gray-800/50 transition-colors">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg class="w-16 h-16 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                <p class="mb-2 text-lg text-gray-400">
+                                    <span class="font-semibold">Click to upload</span> or drag and drop
+                                </p>
+                                <p class="text-md text-gray-500">EXE or DLL (Max: {{ config.MAX_FILE_SIZE//1024//1024 }}MB)</p>
+                            </div>
+                            <input id="file-upload" name="sample" type="file" class="hidden" accept=".exe,.dll" required onchange="displayFileName(this)" />
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-center pt-4">
+                    <button type="submit" class="px-10 py-4 gradient-bg text-white font-bold rounded-xl hover:opacity-90 transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/50">
+                        <i class="fas fa-search mr-3"></i> Start Analysis
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Samples Section -->
+    {% if samples %}
+    <div class="mt-16">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold text-white">Recently Analyzed Samples</h2>
+            <a href="#" class="text-primary hover:text-blue-400 flex items-center">
+                View All
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for sample in samples %}
+            <a href="{{ url_for('sample_detail', sample_id=sample.id) }}" class="bg-gray-800/50 backdrop-blur-sm rounded-xl shadow-lg p-6 hover:bg-gray-700/50 transition-all duration-300 card-hover">
+                <div class="flex items-start mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 rounded-lg flex items-center justify-center
+                            {% if sample.is_malicious %} bg-red-500/20 text-red-400
+                            {% else %} bg-green-500/20 text-green-400 {% endif %}">
+                            <i class="fas {% if sample.is_malicious %}fa-skull-crossbones{% else %}fa-shield-alt{% endif %}"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 min-w-0">
+                        <h3 class="font-bold text-white truncate">{{ sample.filename }}</h3>
+                        <p class="text-sm text-gray-400 mt-1">
+                            {{ sample.upload_date.strftime('%Y-%m-%d %H:%M') }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex justify-between items-center">
+                    <span class="px-3 py-1 rounded-full text-sm font-bold
+                        {% if sample.is_malicious %} bg-red-500/30 text-red-300
+                        {% else %} bg-green-500/30 text-green-300 {% endif %}">
+                        {{ sample.prediction }}
+                    </span>
+
+                    <div class="flex items-center">
+                        <div class="text-sm font-semibold mr-2
+                            {% if sample.is_malicious %} text-red-400
+                            {% else %} text-green-400 {% endif %}">
+                            {% if sample.probability is not none %}
+                                {{ '%.1f'|format(sample.probability * 100) }}%
+                            {% else %}
+                                --
+                            {% endif %}
+                        </div>
+                        <div class="w-16 bg-gray-700 rounded-full h-2">
+                            <div class="h-2 rounded-full
+                                {% if sample.is_malicious %} bg-red-500
+                                {% else %} bg-green-500 {% endif %}"
+                                style="width: {% if sample.probability is not none %}{{ sample.probability * 100 }}%{% else %}0%{% endif %}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Features Section -->
+    <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg card-hover">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                    <i class="fas fa-bolt text-blue-400 text-xl"></i>
+                </div>
+                <h3 class="ml-4 text-xl font-bold text-white">Fast Analysis</h3>
+            </div>
+            <p class="text-gray-400">
+                Our AI-powered engine analyzes files in seconds, providing immediate threat assessment.
+            </p>
+        </div>
+
+        <div class="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg card-hover">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                    <i class="fas fa-brain text-purple-400 text-xl"></i>
+                </div>
+                <h3 class="ml-4 text-xl font-bold text-white">AI Detection</h3>
+            </div>
+            <p class="text-gray-400">
+                Advanced machine learning models detect even the newest and most sophisticated threats.
+            </p>
+        </div>
+
+        <div class="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg card-hover">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
+                    <i class="fas fa-shield-alt text-green-400 text-xl"></i>
+                </div>
+                <h3 class="ml-4 text-xl font-bold text-white">Comprehensive Protection</h3>
+            </div>
+            <p class="text-gray-400">
+                Detailed reports with actionable insights to protect your systems from malware.
+            </p>
+        </div>
+    </div>
+</div>
+</center>
+<script>
+    function displayFileName(input) {
+        const fileName = input.files[0]?.name || 'No file selected';
+        const label = input.parentElement.querySelector('p');
+        if (label) {
+            label.innerHTML = `<span class="font-semibold text-blue-300">${fileName}</span>`;
+        }
+    }
+</script>
+{% endblock %}

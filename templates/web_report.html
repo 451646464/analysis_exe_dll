@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}تقرير تحليل أمان الويب - {{ scan_data.domain }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto" id="report-content">
+    <!-- شريط العنوان -->
+    <div class="gradient-bg rounded-xl p-6 text-white shadow-lg mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold">تقرير تحليل أمان الويب</h1>
+                <p class="opacity-90 mt-1">نتيجة الفحص الأمني للموقع الإلكتروني</p>
+            </div>
+            <div class="mt-4 md:mt-0 text-center">
+                <div class="text-sm opacity-80">تاريخ التقرير</div>
+                <div class="text-lg font-semibold">{{ scan_data.scan_date }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- معلومات الفحص -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 mb-8 card-hover">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+                <h2 class="text-xl font-bold text-green-600 mb-2">معلومات الفحص</h2>
+                <div class="flex items-center">
+                    <span class="bg-gray-200 rounded-full p-2 mr-3">
+                        <i class="fas fa-globe text-gray-700"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-semibold text-lg">{{ scan_data.domain }}</h3>
+                        <p class="text-gray-600 text-sm">نوع الفحص: {{ scan_data.scan_type }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 md:mt-0">
+                <span class="px-4 py-2 rounded-full text-lg font-bold
+                    {% if scan_data.vulnerable_links > 0 %} bg-red-100 text-red-800
+                    {% else %} bg-green-100 text-green-800 {% endif %}">
+                    {% if scan_data.vulnerable_links > 0 %}غير آمن{% else %}آمن{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ملخص النتائج -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 mb-8 card-hover">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-200">ملخص النتائج</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border-t-4 border-blue-500">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-link text-blue-400 text-xl mr-2"></i>
+                    <h3 class="font-semibold text-white">الروابط المفحوصة</h3>
+                </div>
+                <p class="text-3xl font-bold text-blue-400">{{ scan_data.total_links }}</p>
+                <div class="mt-3">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-blue-500 h-2.5 rounded-full" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border-t-4 border-red-500">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-exclamation-triangle text-red-400 text-xl mr-2"></i>
+                    <h3 class="font-semibold text-white">روابط معرضة</h3>
+                </div>
+                <p class="text-3xl font-bold text-red-400">{{ scan_data.vulnerable_links }}</p>
+                <div class="mt-3">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-red-500 h-2.5 rounded-full"
+                             style="width: {{ (scan_data.vulnerable_links / scan_data.total_links * 100) if scan_data.total_links > 0 else 0 }}%"></div>
+                    </div>
+                    <p class="text-sm text-gray-300 mt-1">
+                        نسبة الروابط المعرضة: {{ '%.2f'|format((scan_data.vulnerable_links / scan_data.total_links * 100) if scan_data.total_links > 0 else 0) }}%
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border-t-4 border-yellow-500">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-bug text-yellow-400 text-xl mr-2"></i>
+                    <h3 class="font-semibold text-white">الثغرات المكتشفة</h3>
+                </div>
+
+                <p class="text-3xl font-bold text-yellow-400">{{ scan_data['stats']['vulnerable'] }}</p>
+                <div class="mt-3">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-yellow-500 h-2.5 rounded-full"
+                             style="width: {{ (scan_data.stats.vulnerable / scan_data.stats.total_tests * 100) if scan_data.stats.total_tests > 0 else 0 }}%"></div>
+                    </div>
+                    <p class="text-sm text-gray-300 mt-1">
+                        نسبة الثغرات: {{ '%.2f'|format((scan_data.stats.vulnerable / scan_data.stats.total_tests * 100) if scan_data.stats.total_tests > 0 else 0) }}%
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الثغرات المكتشفة -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
+            <i class="fas fa-shield-alt mr-2"></i> الثغرات المكتشفة
+        </h2>
+
+        {% if scan_data.vulnerabilities %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-700">
+                <thead class="bg-gray-900">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">النوع</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">المعلمة</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">الحمولة</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">مستوى الخطورة</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">علامات الاكتشاف</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-gray-800/50 backdrop-blur-sm rounded-2xl divide-y divide-gray-700">
+                    {% for vuln in scan_data.vulnerabilities %}
+                    <tr class="hover:bg-gray-700/50">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-300">{{ vuln.type }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{{ vuln.param }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-300 max-w-xs truncate">{{ vuln.payload }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-bold rounded-full
+                                {% if SEVERITY_LEVELS.get(vuln.type, 'medium') == 'high' %} bg-red-900 text-red-100
+                                {% elif SEVERITY_LEVELS.get(vuln.type, 'medium') == 'medium' %} bg-yellow-900 text-yellow-100
+                                {% else %} bg-green-900 text-green-100 {% endif %}">
+                                {{ SEVERITY_LEVELS.get(vuln.type, 'متوسط') }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-300">
+                            <ul class="list-disc list-inside">
+                                {% for sign in vuln.detection_signs[:2] %}
+                                <li class="truncate max-w-xs">{{ sign }}</li>
+                                {% endfor %}
+                                {% if vuln.detection_signs|length > 2 %}
+                                <li class="text-gray-500">و{{ vuln.detection_signs|length - 2 }} إشارات أخرى</li>
+                                {% endif %}
+                            </ul>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-8">
+            <div class="inline-block p-4 bg-green-900/30 rounded-full mb-4">
+                <i class="fas fa-check-circle text-green-400 text-4xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-green-400 mb-2">لم يتم اكتشاف أي ثغرات أمنية!</h3>
+            <p class="text-gray-300">الموقع يبدو آمناً بناءً على الفحوصات التي تم إجراؤها.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- تفاصيل الفحص -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
+            <i class="fas fa-chart-bar mr-2"></i> تفاصيل الفحص
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-white mb-3">إحصائيات الفحص</h3>
+                <ul class="space-y-2">
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">إجمالي الاختبارات:</span>
+                        <span class="font-medium text-white">{{ scan_data.stats.total_tests }}</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">اختبارات ناجحة:</span>
+                        <span class="font-medium text-green-400">{{ scan_data.stats.total_tests - scan_data.stats.vulnerable }}</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">اختبارات فاشلة:</span>
+                        <span class="font-medium text-red-400">{{ scan_data.stats.vulnerable }}</span>
+                    </li>
+                    {% if duration %}
+                    <li class="flex justify-between">
+                        <span class="text-gray-400">الوقت المستغرق:</span>
+                        <span class="font-medium text-white">{{ duration }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 class="font-semibold text-white mb-3">أنواع الثغرات</h3>
+                {% if scan_data.vulnerabilities %}
+                <div class="space-y-3">
+                    {% set vuln_types = {} %}
+                    {% for vuln in scan_data.vulnerabilities %}
+                        {% set type = vuln.type %}
+                        {% if vuln_types[type] %}
+                            {% set _ = vuln_types.update({type: vuln_types[type] + 1}) %}
+                        {% else %}
+                            {% set _ = vuln_types.update({type: 1}) %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for type, count in vuln_types.items() %}
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-gray-300">{{ type }}</span>
+                            <span class="text-gray-400">{{ count }}</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-red-500 h-2 rounded-full"
+                                 style="width: {{ (count / scan_data.vulnerabilities|length * 100) }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-lock text-green-400 text-3xl mb-2"></i>
+                    <p class="text-gray-400">لا توجد أنواع ثغرات مسجلة</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- التوصيات الأمنية -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8 card-hover border border-gray-700">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
+            <i class="fas fa-lightbulb mr-2"></i> التوصيات الأمنية
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-blue-500">
+                <h3 class="font-semibold text-blue-400 mb-3">
+                    <i class="fas fa-shield-alt mr-2"></i> إجراءات الوقاية
+                </h3>
+                <ul class="list-disc list-inside pl-2 space-y-2">
+                    <li class="text-gray-300">تحديث البرمجيات والأنظمة باستمرار</li>
+                    <li class="text-gray-300">استخدام جدران الحماية وتطبيقات WAF</li>
+                    <li class="text-gray-300">تنفيذ سياسات كلمات مرور قوية</li>
+                    <li class="text-gray-300">تفعيل المصادقة الثنائية</li>
+                    <li class="text-gray-300">إجراء فحوصات أمنية دورية</li>
+                </ul>
+            </div>
+
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-red-500">
+                <h3 class="font-semibold text-red-400 mb-3">
+                    <i class="fas fa-exclamation-triangle mr-2"></i> إجراءات العلاج
+                </h3>
+                <ul class="list-disc list-inside pl-2 space-y-2">
+                    <li class="text-gray-300">إصلاح الثغرات المكتشفة فوراً</li>
+                    <li class="text-gray-300">مراجعة أذونات المستخدمين والصلاحيات</li>
+                    <li class="text-gray-300">فحص السجلات لاكتشاف أي اختراقات</li>
+                    <li class="text-gray-300">تشفير البيانات الحساسة</li>
+                    <li class="text-gray-300">إنشاء نسخ احتياطية دورية</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- خيارات التقرير -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-md p-6 border-t-4 border-red-500 card-hover">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
+            <i class="fas fa-cog mr-2"></i> خيارات التقرير
+        </h2>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{{ url_for('generate_web_pdf', scan_id=scan_data.id) }}"
+               class="px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white font-medium rounded-lg hover:from-green-700 hover:to-teal-700 transition-all flex items-center justify-center">
+                <i class="fas fa-file-pdf mr-2"></i> حفظ كـ PDF
+            </a>
+
+            <button id="share-report-btn"
+                    class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-700 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-800 transition-all flex items-center justify-center">
+                <i class="fas fa-share-alt mr-2"></i> مشاركة التقرير
+            </button>
+<!-- زر حذف التقرير -->
+<button onclick="confirmDelete('web', {{ analysis_id }})"
+        class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-800 text-white font-medium rounded-lg hover:from-red-700 hover:to-red-900 transition-all flex items-center justify-center">
+    <i class="fas fa-trash-alt mr-2"></i> حذف التقرير
+</button>
+            <a href="{{ url_for('web_analysis') }}"
+               class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-all flex items-center justify-center">
+                <i class="fas fa-redo mr-2"></i> فحص موقع آخر
+            </a>
+        </div>
+    </div>
+</div>
+<script>
+function confirmDelete(reportType, reportId) {
+    if (confirm('هل أنت متأكد من أنك تريد حذف هذا التقرير؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        deleteReport(reportType, reportId);
+    }
+}
+
+function deleteReport(reportType, reportId) {
+    let endpoint = '';
+    switch(reportType) {
+        case 'sample':
+            endpoint = `/delete_sample_report/${reportId}`;
+            break;
+        case 'web':
+            endpoint = `/delete_web_report/${reportId}`;
+            break;
+        case 'url':
+            endpoint = `/delete_url_report/${reportId}`;
+            break;
+        case 'code':
+            endpoint = `/delete_code_report/${reportId}`;
+            break;
+        case 'pdf':
+            endpoint = `/delete_pdf_report/${reportId}`;
+            break;
+        default:
+            alert('نوع التقرير غير معروف');
+            return;
+    }
+
+    fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم حذف التقرير بنجاح');
+            window.location.href = "/dashboard";
+        } else {
+            alert('فشل في حذف التقرير: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء محاولة الحذف');
+    });
+}
+</script>
+<script>
+    // فتح نموذج المشاركة
+    document.getElementById('share-report-btn').addEventListener('click', function() {
+        const expiryDays = 7;
+        const scanId = {{ scan_data.id }};
+
+        fetch(`/share_web_scan/${scanId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `expiry_days=${expiryDays}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // إنشاء عنصر نصي مخفي لنسخ الرابط
+                const tempInput = document.createElement('input');
+                tempInput.value = data.share_url;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
+                alert('تم نسخ رابط المشاركة: ' + data.share_url);
+            } else {
+                alert('حدث خطأ أثناء توليد الرابط: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء توليد الرابط');
+        });
+    });
+</script>
+{% endblock %}

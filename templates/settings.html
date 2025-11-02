@@ -1,0 +1,751 @@
+{% extends "base.html" %}
+
+{% block title %}الإعدادات - CyberHomesh{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 mb-8 card-hover">
+        <h1 class="text-2xl font-bold text-white mb-2 flex items-center">
+            <i class="fas fa-cog mr-3 text-primary"></i>
+            إعدادات الحساب
+        </h1>
+        <p class="text-gray-400">إدارة معلومات حسابك وتفضيلات الأمان والإشعارات</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- القائمة الجانبية -->
+        <div class="lg:col-span-1">
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden card-hover">
+                <div class="p-4 border-b border-gray-700">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white font-bold text-lg">
+                            {{ current_user.username[0]|upper }}
+                        </div>
+                        <div>
+                            <p class="font-semibold">{{ current_user.username }}</p>
+                            <p class="text-xs text-gray-400">{{ current_user.email }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <nav class="p-2">
+                    <a href="#profile" class="settings-tab active flex items-center p-3 rounded-lg bg-gray-700/50 mb-1 text-white">
+                        <i class="fas fa-user-circle mr-3 text-blue-400"></i>
+                        الملف الشخصي
+                    </a>
+                    <a href="#security" class="settings-tab flex items-center p-3 rounded-lg hover:bg-gray-700/50 mb-1 text-gray-300">
+                        <i class="fas fa-shield-alt mr-3 text-green-400"></i>
+                        الأمان
+                    </a>
+                    <a href="#notifications" class="settings-tab flex items-center p-3 rounded-lg hover:bg-gray-700/50 mb-1 text-gray-300">
+                        <i class="fas fa-bell mr-3 text-yellow-400"></i>
+                        الإشعارات
+                    </a>
+                    <a href="#preferences" class="settings-tab flex items-center p-3 rounded-lg hover:bg-gray-700/50 mb-1 text-gray-300">
+                        <i class="fas fa-sliders-h mr-3 text-purple-400"></i>
+                        التفضيلات
+                    </a>
+                    <a href="#privacy" class="settings-tab flex items-center p-3 rounded-lg hover:bg-gray-700/50 text-gray-300">
+                        <i class="fas fa-lock mr-3 text-red-400"></i>
+                        الخصوصية
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- محتوى الإعدادات -->
+        <div class="lg:col-span-2">
+            <!-- قسم الملف الشخصي -->
+            <div id="profile" class="settings-content block">
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 card-hover">
+                    <h2 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i class="fas fa-user-circle mr-3 text-blue-400"></i>
+                        المعلومات الشخصية
+                    </h2>
+                    
+                    <form id="profileForm" action="{{ url_for('update_profile') }}" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="mb-6">
+                            <label class="block text-gray-300 mb-2">الصورة الشخصية</label>
+                            <div class="flex items-center mt-2">
+                                <div class="relative">
+                                    <div id="avatarContainer" class="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white font-bold text-xl mr-4">
+                                        {% if current_user.profile_image %}
+                                        <img id="profileImagePreview" class="w-16 h-16 rounded-full object-cover" src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_image) }}" alt="صورة الملف الشخصي">
+                                        <span id="profileInitial" class="text-xl hidden">{{ current_user.username[0]|upper }}</span>
+                                        {% else %}
+                                        <img id="profileImagePreview" class="w-16 h-16 rounded-full object-cover hidden" src="" alt="صورة الملف الشخصي">
+                                        <span id="profileInitial" class="text-xl">{{ current_user.username[0]|upper }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <label for="avatarUpload" class="cursor-pointer absolute bottom-0 right-0 bg-primary rounded-full p-1">
+                                        <i class="fas fa-camera text-white text-xs"></i>
+                                        <input type="file" id="avatarUpload" name="avatar" class="hidden" accept="image/*">
+                                    </label>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 text-sm">الصيغ المدعومة: JPG, PNG, GIF</p>
+                                    <p class="text-gray-400 text-sm">الحد الأقصى: 2MB</p>
+                                </div>
+                            </div>
+                            <div id="avatarPreview" class="mt-4 hidden">
+                                <img id="previewImage" class="w-24 h-24 rounded-full object-cover border-2 border-primary">
+                                <button type="button" id="cancelUpload" class="mt-2 text-red-400 text-sm">إلغاء</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block text-gray-300 mb-2">اسم المستخدم</label>
+                                <input type="text" id="username" name="username" value="{{ current_user.username }}"
+                                    class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary" required>
+                            </div>
+                            <div>
+                                <label class="block text-gray-300 mb-2">البريد الإلكتروني</label>
+                                <input type="email" id="email" name="email" value="{{ current_user.email }}"
+                                    class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary" required>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" class="px-6 py-2 bg-primary hover:bg-blue-600 rounded-lg font-medium transition">حفظ التغييرات</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- قسم الأمان -->
+            <div id="security" class="settings-content hidden">
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 card-hover">
+                    <h2 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i class="fas fa-shield-alt mr-3 text-green-400"></i>
+                        إعدادات الأمان
+                    </h2>
+
+                    <div class="mb-8">
+                        <h3 class="text-lg font-medium text-white mb-4">تغيير كلمة المرور</h3>
+
+                        <form id="passwordForm" action="{{ url_for('change_password') }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <div class="mb-4">
+                                <label class="block text-gray-300 mb-2">كلمة المرور الحالية</label>
+                                <input type="password" id="currentPassword" name="current_password"
+                                    class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary" required>
+                                <p class="text-red-400 text-sm mt-1 hidden" id="currentPasswordError">كلمة المرور الحالية غير صحيحة</p>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-gray-300 mb-2">كلمة المرور الجديدة</label>
+                                <input type="password" id="newPassword" name="new_password"
+                                    class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary" required>
+                                <p class="text-gray-400 text-sm mt-1">يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل</p>
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="block text-gray-300 mb-2">تأكيد كلمة المرور الجديدة</label>
+                                <input type="password" id="confirmPassword" name="confirm_password"
+                                    class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary" required>
+                                <p class="text-red-400 text-sm mt-1 hidden" id="passwordMatchError">كلمة المرور غير متطابقة</p>
+                            </div>
+
+                            <div class="flex justify-end">
+                                <button type="submit" class="px-6 py-2 bg-primary hover:bg-blue-600 rounded-lg font-medium transition">تغيير كلمة المرور</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- قسم الإشعارات -->
+            <div id="notifications" class="settings-content hidden">
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 card-hover">
+                    <h2 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i class="fas fa-bell mr-3 text-yellow-400"></i>
+                        إعدادات الإشعارات
+                    </h2>
+
+                    <form id="notificationsForm" action="{{ url_for('update_settings') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-300 font-medium">الإشعارات البريدية</p>
+                                    <p class="text-sm text-gray-500">استقبل تحديثات على بريدك الإلكتروني</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="emailNotifications" name="email_notifications" class="sr-only peer" {% if user_settings and user_settings.email_notifications %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-300 font-medium">إشعارات الأمان</p>
+                                    <p class="text-sm text-gray-500">تمكين إشعارات تسجيل الدخول والنشاط المشبوه</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="securityNotifications" name="security_notifications" class="sr-only peer" {% if user_settings and user_settings.security_notifications %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-300 font-medium">إشعارات التطبيق</p>
+                                    <p class="text-sm text-gray-500">استقبل إشعارات داخل التطبيق</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="appNotifications" name="app_notifications" class="sr-only peer" {% if user_settings and user_settings.app_notifications %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-300 font-medium">النشرة الإخبارية</p>
+                                    <p class="text-sm text-gray-500">اشترك في النشرة الإخبارية لتلقي التحديثات</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="newsletter" name="newsletter" class="sr-only peer" {% if user_settings and user_settings.newsletter %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end mt-8">
+                            <button type="submit" class="px-6 py-2 bg-primary hover:bg-blue-600 rounded-lg font-medium transition">حفظ التغييرات</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- قسم التفضيلات -->
+            <div id="preferences" class="settings-content hidden">
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 card-hover">
+                    <h2 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i class="fas fa-sliders-h mr-3 text-purple-400"></i>
+                        التفضيلات
+                    </h2>
+
+                    <form id="preferencesForm" action="{{ url_for('update_settings') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-gray-300 mb-2">اللغة</label>
+                                <select id="language" name="language" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="ar" {% if user_settings and user_settings.language == 'ar' %}selected{% endif %}>العربية</option>
+                                    <option value="en" {% if user_settings and user_settings.language == 'en' %}selected{% endif %}>English</option>
+                                    <option value="fr" {% if user_settings and user_settings.language == 'fr' %}selected{% endif %}>Français</option>
+                                    <option value="es" {% if user_settings and user_settings.language == 'es' %}selected{% endif %}>Español</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-300 mb-2">الوحدة الزمنية</label>
+                                <select id="timeFormat" name="time_format" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="24" {% if user_settings and user_settings.time_format == '24' %}selected{% endif %}>24 ساعة</option>
+                                    <option value="12" {% if user_settings and user_settings.time_format == '12' %}selected{% endif %}>12 ساعة (AM/PM)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-300 mb-2">المظهر</label>
+                                <div class="grid grid-cols-2 gap-4 mt-2">
+                                    <div class="relative">
+                                        <input type="radio" name="theme" id="dark-theme" value="dark" class="sr-only peer" {% if not user_settings or user_settings.theme == 'dark' %}checked{% endif %}>
+                                        <label for="dark-theme" class="flex flex-col items-center p-4 bg-gray-700/50 border border-gray-600 rounded-lg cursor-pointer peer-checked:border-primary">
+                                            <i class="fas fa-moon text-xl mb-2 text-purple-400"></i>
+                                            <span>داكن</span>
+                                        </label>
+                                    </div>
+                                    <div class="relative">
+                                        <input type="radio" name="theme" id="light-theme" value="light" class="sr-only peer" {% if user_settings and user_settings.theme == 'light' %}checked{% endif %}>
+                                        <label for="light-theme" class="flex flex-col items-center p-4 bg-gray-700/50 border border-gray-600 rounded-lg cursor-pointer peer-checked:border-primary">
+                                            <i class="fas fa-sun text-xl mb-2 text-yellow-400"></i>
+                                            <span>فاتح</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end mt-8">
+                            <button type="submit" class="px-6 py-2 bg-primary hover:bg-blue-600 rounded-lg font-medium transition">حفظ التغييرات</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- قسم الخصوصية -->
+            <div id="privacy" class="settings-content hidden">
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 card-hover">
+                    <h2 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i class="fas fa-lock mr-3 text-red-400"></i>
+                        إعدادات الخصوصية
+                    </h2>
+
+                    <form id="privacyForm" action="{{ url_for('update_settings') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-300 font-medium">الحساب الخاص</p>
+                                    <p class="text-sm text-gray-500">إخفاء نشاطك عن المستخدمين الآخرين</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="privateAccount" name="private_account" class="sr-only peer" {% if user_settings and user_settings.private_account %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-300 font-medium">تفعيل تسجيل الدخول الآمن</p>
+                                    <p class="text-sm text-gray-500">طلب التحقق عند الدخول من جهاز جديد</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="secureLogin" name="secure_login" class="sr-only peer" {% if not user_settings or user_settings.secure_login %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-300 font-medium">جمع بيانات التحليل</p>
+                                    <p class="text-sm text-gray-500">السماح بجمع بيانات الاستخدام لتحسين الخدمة</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="analytics" name="analytics" class="sr-only peer" {% if not user_settings or user_settings.analytics %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end mt-8">
+                            <button type="submit" class="px-6 py-2 bg-primary hover:bg-blue-600 rounded-lg font-medium transition">حفظ التغييرات</button>
+                        </div>
+                    </form>
+
+                    <div class="mt-8 pt-6 border-t border-gray-700">
+                        <h3 class="text-lg font-medium text-white mb-4">حذف الحساب</h3>
+                        <p class="text-gray-400 mb-4">حذف حسابك بشكل دائم وإزالة جميع البيانات. لا يمكن التراجع عن هذا الإجراء.</p>
+                        <button id="deleteAccountBtn" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-medium transition">حذف الحساب</button>
+
+                        <div id="deleteConfirm" class="mt-4 p-4 bg-gray-800 rounded-lg hidden">
+                            <p class="text-red-400 font-medium mb-3">هل أنت متأكد من أنك تريد حذف حسابك؟ هذا الإجراء لا يمكن التراجع عنه.</p>
+                            <div class="flex space-x-2">
+                                <input type="password" id="deletePassword" class="flex-grow bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white" placeholder="أدخل كلمة المرور للتأكيد">
+                                <button id="confirmDelete" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-medium transition">تأكيد الحذف</button>
+                                <button id="cancelDelete" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg font-medium transition">إلغاء</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .settings-tab {
+        transition: all 0.2s ease;
+    }
+
+    .settings-tab:hover, .settings-tab.active {
+        background-color: rgba(55, 65, 81, 0.5) !important;
+    }
+
+    .settings-content {
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .toast.success {
+        background-color: #10B981;
+    }
+
+    .toast.error {
+        background-color: #EF4444;
+    }
+
+    /* أنماط الوضع الفاتح */
+    .light-mode {
+        --bg-primary: #f8fafc;
+        --bg-secondary: #f1f5f9;
+        --text-primary: #1e293b;
+        --text-secondary: #475569;
+        --border-color: #cbd5e1;
+    }
+
+    .light-mode body {
+        background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 100%);
+        color: var(--text-primary);
+    }
+
+    .light-mode .bg-gray-800\/50 {
+        background-color: rgba(248, 250, 252, 0.8);
+    }
+
+    .light-mode .text-gray-100 {
+        color: var(--text-primary);
+    }
+
+    .light-mode .text-gray-300 {
+        color: var(--text-secondary);
+    }
+
+    .light-mode .text-gray-400 {
+        color: #64748b;
+    }
+
+    .light-mode .border-gray-700 {
+        border-color: var(--border-color);
+    }
+
+    .light-mode .bg-gray-700\/50 {
+        background-color: rgba(226, 232, 240, 0.5);
+    }
+
+    .light-mode .card-hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .light-mode .card-hover:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تنظيم التبويبات
+        const tabs = document.querySelectorAll('.settings-tab');
+        const contents = document.querySelectorAll('.settings-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // إزالة النشاط من جميع التبويبات
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.classList.remove('bg-gray-700/50');
+                    t.classList.remove('text-white');
+                    t.classList.add('text-gray-300');
+                });
+
+                // إضافة النشاط للتبويب الحالي
+                this.classList.add('active');
+                this.classList.add('bg-gray-700/50');
+                this.classList.add('text-white');
+                this.classList.remove('text-gray-300');
+
+                // إخفاء جميع المحتويات
+                contents.forEach(content => {
+                    content.classList.add('hidden');
+                });
+
+                // إظهار المحتوى المرتبط بالتبويب
+                const target = this.getAttribute('href').substring(1);
+                document.getElementById(target).classList.remove('hidden');
+            });
+        });
+
+        // معالجة رفع الصورة الشخصية
+        const avatarUpload = document.getElementById('avatarUpload');
+        const avatarPreview = document.getElementById('avatarPreview');
+        const previewImage = document.getElementById('previewImage');
+        const cancelUpload = document.getElementById('cancelUpload');
+        const profileImagePreview = document.getElementById('profileImagePreview');
+        const profileInitial = document.getElementById('profileInitial');
+
+        avatarUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // التحقق من حجم الملف
+                if (file.size > 2 * 1024 * 1024) {
+                    showToast('حجم الملف يجب أن يكون أقل من 2MB', 'error');
+                    return;
+                }
+
+                // التحقق من نوع الملف
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (!validTypes.includes(file.type)) {
+                    showToast('نوع الملف غير مدعوم', 'error');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    avatarPreview.classList.remove('hidden');
+
+                    // عرض المعاينة في مكان الصورة الأساسية
+                    profileImagePreview.src = e.target.result;
+                    profileImagePreview.classList.remove('hidden');
+                    profileInitial.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        cancelUpload.addEventListener('click', function() {
+            avatarPreview.classList.add('hidden');
+            avatarUpload.value = '';
+
+            // إعادة عرض الحرف الأول
+            profileImagePreview.classList.add('hidden');
+            profileInitial.classList.remove('hidden');
+        });
+
+        // معالجة تغيير المظهر
+        const themeRadios = document.querySelectorAll('input[name="theme"]');
+
+        // تحميل المظهر المحفوظ
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.getElementById(`${savedTheme}-theme`).checked = true;
+        applyTheme(savedTheme);
+
+        themeRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                applyTheme(this.value);
+                localStorage.setItem('theme', this.value);
+            });
+        });
+
+        // تطبيق المظهر المختار
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-mode');
+            } else {
+                document.documentElement.classList.remove('light-mode');
+            }
+        }
+
+        // التحقق من تطابق كلمة المرور
+        const passwordForm = document.getElementById('passwordForm');
+        const newPassword = document.getElementById('newPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const passwordMatchError = document.getElementById('passwordMatchError');
+
+        confirmPassword.addEventListener('input', function() {
+            if (newPassword.value !== confirmPassword.value) {
+                passwordMatchError.classList.remove('hidden');
+            } else {
+                passwordMatchError.classList.add('hidden');
+            }
+        });
+
+        // معالجة إرسال النماذج
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // إظهار مؤشر التحميل
+                const submitButton = this.querySelector('button[type="submit"]');
+                const originalText = submitButton.textContent;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+                submitButton.disabled = true;
+
+                // إرسال النموذج
+                fetch(this.action, {
+                    method: this.method,
+                    body: new FormData(this)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(data.message, 'success');
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showToast('حدث خطأ أثناء حفظ التغييرات', 'error');
+                })
+                .finally(() => {
+                    // إعادة حالة الزر إلى الطبيعي
+                    submitButton.textContent = originalText;
+                    submitButton.disabled = false;
+                });
+            });
+        });
+
+        // معالجة حذف الحساب
+        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+        const deleteConfirm = document.getElementById('deleteConfirm');
+        const cancelDelete = document.getElementById('cancelDelete');
+        const confirmDelete = document.getElementById('confirmDelete');
+
+        deleteAccountBtn.addEventListener('click', function() {
+            deleteConfirm.classList.toggle('hidden');
+        });
+
+        cancelDelete.addEventListener('click', function() {
+            deleteConfirm.classList.add('hidden');
+        });
+
+        confirmDelete.addEventListener('click', function() {
+            const password = document.getElementById('deletePassword').value;
+
+            if (!password) {
+                showToast('الرجاء إدخال كلمة المرور', 'error');
+                return;
+            }
+
+            // محاكاة حذف الحساب
+            setTimeout(() => {
+                showToast('تم حذف الحساب بنجاح', 'success');
+                setTimeout(() => {
+                    window.location.href = "{{ url_for('logout') }}";
+                }, 2000);
+            }, 1500);
+        });
+
+        // وظيفة لعرض الإشعارات
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // تحميل الإعدادات المحفوظة
+        loadSettings();
+
+        function loadSettings() {
+            // تحميل إعدادات اللغة
+            const savedLanguage = localStorage.getItem('language');
+            if (savedLanguage) {
+                document.getElementById('language').value = savedLanguage;
+            }
+
+            // تحميل إعدادات التوقيت
+            const savedTimeFormat = localStorage.getItem('timeFormat');
+            if (savedTimeFormat) {
+                document.getElementById('timeFormat').value = savedTimeFormat;
+            }
+
+            // تحميل إعدادات المظهر
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.getElementById(`${savedTheme}-theme`).checked = true;
+                applyTheme(savedTheme);
+            }
+
+            // تحميل إعدادات الإشعارات
+            const emailNotifications = localStorage.getItem('emailNotifications');
+            if (emailNotifications !== null) {
+                document.getElementById('emailNotifications').checked = emailNotifications === 'true';
+            }
+
+            const securityNotifications = localStorage.getItem('securityNotifications');
+            if (securityNotifications !== null) {
+                document.getElementById('securityNotifications').checked = securityNotifications === 'true';
+            }
+
+            const appNotifications = localStorage.getItem('appNotifications');
+            if (appNotifications !== null) {
+                document.getElementById('appNotifications').checked = appNotifications === 'true';
+            }
+
+            const newsletter = localStorage.getItem('newsletter');
+            if (newsletter !== null) {
+                document.getElementById('newsletter').checked = newsletter === 'true';
+            }
+
+            // تحميل إعدادات الخصوصية
+            const privateAccount = localStorage.getItem('privateAccount');
+            if (privateAccount !== null) {
+                document.getElementById('privateAccount').checked = privateAccount === 'true';
+            }
+
+            const secureLogin = localStorage.getItem('secureLogin');
+            if (secureLogin !== null) {
+                document.getElementById('secureLogin').checked = secureLogin === 'true';
+            }
+
+            const analytics = localStorage.getItem('analytics');
+            if (analytics !== null) {
+                document.getElementById('analytics').checked = analytics === 'true';
+            }
+        }
+
+        // حفظ الإعدادات في localStorage عند التغيير
+        document.getElementById('language').addEventListener('change', function() {
+            localStorage.setItem('language', this.value);
+        });
+
+        document.getElementById('timeFormat').addEventListener('change', function() {
+            localStorage.setItem('timeFormat', this.value);
+        });
+
+        document.querySelectorAll('input[name="theme"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                localStorage.setItem('theme', this.value);
+            });
+        });
+
+        document.getElementById('emailNotifications').addEventListener('change', function() {
+            localStorage.setItem('emailNotifications', this.checked);
+        });
+
+        document.getElementById('securityNotifications').addEventListener('change', function() {
+            localStorage.setItem('securityNotifications', this.checked);
+        });
+
+        document.getElementById('appNotifications').addEventListener('change', function() {
+            localStorage.setItem('appNotifications', this.checked);
+        });
+
+        document.getElementById('newsletter').addEventListener('change', function() {
+            localStorage.setItem('newsletter', this.checked);
+        });
+
+        document.getElementById('privateAccount').addEventListener('change', function() {
+            localStorage.setItem('privateAccount', this.checked);
+        });
+
+        document.getElementById('secureLogin').addEventListener('change', function() {
+            localStorage.setItem('secureLogin', this.checked);
+        });
+
+        document.getElementById('analytics').addEventListener('change', function() {
+            localStorage.setItem('analytics', this.checked);
+        });
+    });
+</script>
+{% endblock %}
